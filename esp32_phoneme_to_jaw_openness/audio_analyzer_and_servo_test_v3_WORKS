@@ -1,0 +1,184 @@
+// This sketch runs on an esp32, with a Left only input, a capacitor, and a bias voltage of 1.65
+// It then measures the signal and performs a FFT to output signal peaks 
+// It maps the frequency peaks freequencies of common vowel formants (based on measuring Timmy's use)
+// It outputs a 0-100 value that will be used to control a servo on the jaw to open the moytgh correctly
+// This works with minor difficulty on "eee" and some other sounds.
+//This version i am playing with timings.
+// 4/4: const unsigned long measureDuration = 25; meh
+// 4/4: #define SAMPLES 128
+// v3 (4/5) changes doubles to floats
+
+#include <arduinoFFT.h>
+#include <math.h>
+#include "driver/mcpwm.h"
+
+// === Audio and FFT Config ===
+#define AUDIO_PIN 4
+#define SAMPLES 128
+#define SAMPLING_FREQ 8000
+
+// === Servo Config ===
+#define SERVO_GPIO 5
+#define SERVO_MIN_PULSEWIDTH_US 500
+#define SERVO_MAX_PULSEWIDTH_US 2500
+#define SERVO_MAX_DEGREE 180
+
+// === Buffers and FFT Setup ===
+float vReal[SAMPLES];
+float vImag[SAMPLES];
+ArduinoFFT<float> FFT(vReal, vImag, SAMPLES, SAMPLING_FREQ);
+
+// === Analysis Parameters ===
+const unsigned long measureDuration = 16;   // ms
+const float min_voltage = 0.05;
+const float voltageConversion = 3.3f / 4095.0f;
+const unsigned long sampleInterval = 1000000UL / SAMPLING_FREQ;
+
+// === Function Declarations ===
+int mapOpenness(float avgF1);
+void openToServo(int percentage);
+uint32_t servo_per_degree_init(uint32_t degree_of_rotation);
+void mcpwm_gpio_initialize();
+
+void setup() {
+  Serial.begin(115200);
+  analogReadResolution(12);
+  analogSetAttenuation(ADC_11db);
+
+  mcpwm_gpio_initialize();
+  mcpwm_config_t pwm_config;
+  pwm_config.frequency = 50;
+  pwm_config.cmpr_a = 0;
+  pwm_config.cmpr_b = 0;
+  pwm_config.counter_mode = MCPWM_UP_COUNTER;
+  pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
+  mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config);
+
+  Serial.println("MCPWM initialized.");
+}
+
+void loop() {
+  unsigned long startMeasure = millis();
+  float sumF1 = 0;
+  int count = 0;
+  int openness = 0;
+  static float smoothedOpenness = 0;  // For smoothing jaw motion
+
+  while (millis() - startMeasure < measureDuration) {
+    unsigned long startTime = micros();
+    static float runningAvg = 0;
+    const float alphaDC = 0.01f;
+    float sumSquares = 0;
+
+    for (int i = 0; i < SAMPLES; i++) {
+      float rawValue = analogRead(AUDIO_PIN) * voltageConversion;
+      runningAvg = (1.0f - alphaDC) * runningAvg + alphaDC * rawValue;
+      float sample = rawValue - runningAvg;
+      vReal[i] = sample;
+      vImag[i] = 0;
+      sumSquares += sample * sample;
+
+      unsigned long nextSampleTime = startTime + ((i + 1) * sampleInterval);
+      while (micros() < nextSampleTime);
+    }
+
+    float rms = sqrtf(sumSquares / SAMPLES);
+
+    FFT.windowing(FFT_WIN_TYP_HAMMING, FFT_FORWARD);
+    FFT.compute(FFT_FORWARD);
+    FFT.complexToMagnitude();
+
+    float binWidth = SAMPLING_FREQ / (float)SAMPLES;
+    int f1_lower = ceil(300.0f / binWidth);
+    int f1_upper = floor(900.0f / binWidth);
+    float f1_peakMag = 0;
+    int f1_peakIdx = 0;
+
+    for (int i = f1_lower; i <= f1_upper; i++) {
+      if (vReal[i] > f1_peakMag) {
+        f1_peakMag = vReal[i];
+        f1_peakIdx = i;
+      }
+    }
+
+    float f1_peakFreq = (rms < min_voltage) ? 0 : f1_peakIdx * binWidth;
+    sumF1 += f1_peakFreq;
+    count++;
+  }
+
+  float avgF1 = sumF1 / count;
+  openness = mapOpenness(avgF1);
+
+  // === Exponential Smoothing ===
+  smoothedOpenness = 0.60f * smoothedOpenness + 0.40f * openness;
+  openToServo((int)smoothedOpenness);
+}
+
+// === Map Detected Formant to Openness ===
+int mapOpenness(float avgF1) {
+  struct SoundRange {
+    float minFreq;
+    float maxFreq;
+    int opennessVal;
+  };
+
+
+    // {325, 429, 10}, // See
+    // {400, 500, 10}, // Moon
+    // {304, 398, 30}, // Say
+    // {562, 648, 30}, // Fear
+    // {625, 765, 50}, // Set
+    // {734, 804, 60}, // Cat
+    // {859, 898, 90}, // Father
+    // {804, 875, 80}, // Car
+    // {781, 898, 80}, // Hot
+    // {726, 804, 60}, // Cup
+    // {757, 859, 50}, // Saw
+    // {382, 460, 30}, // Ink
+    // {523, 671, 30}, // Go
+    // {312, 512, 10}  // Blue
+
+
+  static const SoundRange table[] = {
+    {300, 380, 30}, {400, 550, 30}, {304, 398, 30},
+    {562, 648, 30}, {625, 765, 50}, {734, 804, 60},
+    {859, 898, 90}, {804, 875, 80}, {781, 898, 80},
+    {726, 804, 60}, {757, 859, 50}, {351, 585, 40},
+    {523, 671, 50}, {312, 512, 20}
+  };
+
+  const int n = sizeof(table) / sizeof(table[0]);
+  int bestOpenness = 0;
+  float bestDist = 1e9;
+
+  for (int i = 0; i < n; i++) {
+    if (avgF1 >= table[i].minFreq && avgF1 <= table[i].maxFreq) {
+      float center = 0.5f * (table[i].minFreq + table[i].maxFreq);
+      float dist = fabsf(avgF1 - center);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestOpenness = table[i].opennessVal;
+      }
+    }
+  }
+
+  return bestOpenness;
+}
+
+// === Servo Control ===
+void openToServo(int percentage) {
+  percentage = constrain(percentage, 0, 100);
+  int angle = map(percentage, 0, 100, 0, 90);  // 90° max for jaw
+  uint32_t pulse_width = servo_per_degree_init(angle);
+  mcpwm_set_duty_in_us(MCPWM_UNIT_0, MCPWM_TIMER_0, MCPWM_OPR_A, pulse_width);
+}
+
+// === Servo Init ===
+uint32_t servo_per_degree_init(uint32_t degree_of_rotation) {
+  return ((SERVO_MAX_PULSEWIDTH_US - SERVO_MIN_PULSEWIDTH_US) * degree_of_rotation)
+         / SERVO_MAX_DEGREE + SERVO_MIN_PULSEWIDTH_US;
+}
+
+void mcpwm_gpio_initialize() {
+  mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0A, SERVO_GPIO);
+}
