@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Little Timmy Chat</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-half {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+    }
+
+    .bottom-half {
+      flex: 1;
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+
+    #chatbox {
+      flex: 1;
+      border: 1px solid black;
+      overflow-y: auto;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #f9f9f9;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message {
+      margin-bottom: 8px;
+    }
+
+    #user_input {
+      flex: 1;
+      padding: 5px;
+    }
+
+    .panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      box-sizing: border-box;
+      border-left: 1px solid #ccc;
+    }
+
+    .panel:first-child {
+      border-left: none;
+    }
+
+    .message-meta {
+      font-size: 0.85em;
+      color: gray;
+    }
+
+    .memory-text {
+      margin-top: 4px;
+    }
+
+    .token-display {
+      text-align: center;
+      padding: 15px;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .token-count {
+      font-size: 1.8em;
+      font-weight: bold;
+      color: #333;
+      display: block;
+    }
+
+    .token-label {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    /* Color coding for token usage */
+    .token-safe { color: #28a745; }      /* Green - under 80% */
+    .token-warning { color: #ffc107; }   /* Yellow - 80-90% */  
+    .token-danger { color: #dc3545; }    /* Red - over 90% */
+  </style>
+</head>
+<body>
+  <div style="padding: 10px; background: #eee;">
+    <h2>Little Timmy</h2>
+    <div style="font-size: 0.8em; color: gray;">
+      Session ID: <code id="session_id"></code>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <!-- Chat top half -->
+    <div class="top-half">
+      <div id="chatbox"></div>
+      <div style="display: flex; gap: 10px;">
+        <input id="user_input" type="text" placeholder="Type a message..." />
+        <button onclick="console.log('Send button clicked!'); sendMessage()">Send</button>
+      </div>
+    </div>
+
+    <!-- Memory + Retrieval + Tokens bottom half -->
+    <div class="bottom-half">
+      <div class="panel">
+        <h4>🧠 Memory Inspector</h4>
+        <div id="memory_panel">Loading...</div>
+      </div>
+      <div class="panel">
+        <h4>🔎 Retrieval Inspector</h4>
+        <div id="retrieval_panel">Awaiting query...</div>
+      </div>
+      <div class="panel">
+        <h4>📊 Tokens</h4>
+        <div id="token_panel">
+          <div class="token-display">
+            <span class="token-count" id="token_count">0</span>
+            <span class="token-label">tokens used</span>
+          </div>
+          <div class="token-display" style="margin-top:8px">
+            <div class="token-label" style="margin-bottom:4px">KV cache stats (latest turn)</div>
+            <div style="font-size:0.95em;color:#333">
+              <div>tail_mode: <span id="kv_tail_mode">-</span></div>
+              <div>prompt_eval_count: <span id="kv_prompt_eval_count">-</span></div>
+              <div>eval_count: <span id="kv_eval_count">-</span></div>
+              <div>durations: load=<span id="kv_load_ms">-</span> ms, prompt_eval=<span id="kv_prompt_ms">-</span> ms, eval=<span id="kv_eval_ms">-</span> ms, total=<span id="kv_total_ms">-</span> ms</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    console.log("JavaScript is loading...");
+    const socket = io();
+    console.log("Socket.io initialized:", socket);
+
+    function addMessageToChatbox(sender, message) {
+      const chatbox = document.getElementById("chatbox");
+      const messageElement = document.createElement("div");
+      messageElement.classList.add("message");
+
+      const senderElement = document.createElement("b");
+      senderElement.textContent = sender + ": ";
+      messageElement.appendChild(senderElement);
+
+      // Use textContent to prevent XSS by ensuring the message is treated as plain text
+      const messageTextNode = document.createTextNode(message);
+      messageElement.appendChild(messageTextNode);
+      
+      chatbox.appendChild(messageElement);
+      chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll to the latest message
+    }
+
+    function sendMessage() {
+      console.log("sendMessage() function called!");
+      const input = document.getElementById("user_input");
+      const message = input.value.trim();
+      console.log("Message to send:", message);
+      if (!message) return;
+      input.value = "";
+
+      addMessageToChatbox("You", message);
+
+      // Emit to backend for regular chat handling
+      socket.emit("user_message", { message });
+
+      // Also fetch retrieval data for the current message to inspect context
+      console.log("Fetching retrieval data for:", message);
+      const panel = document.getElementById("retrieval_panel");
+      panel.textContent = "Loading retrieval data...";
+      
+      fetch(`/api/retrieve_inspect?q=${encodeURIComponent(message)}`)
+        .then(res => {
+          console.log("Retrieval API response status:", res.status);
+          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          return res.json();
+        })
+        .then(data => {
+          console.log("Retrieval API data:", data);
+          panel.innerHTML = ""; // Clear previous results
+
+          if (!data.results || data.results.length === 0) {
+            panel.textContent = "No matching memories found for this query.";
+            return;
+          }
+
+          data.results.forEach(result => {
+            const div = document.createElement("div");
+            div.style.borderBottom = "1px solid #ddd";
+            div.style.marginBottom = "8px";
+            div.style.paddingBottom = "4px";
+
+            const header = document.createElement('div');
+            const roleB = document.createElement('b');
+            roleB.textContent = result.role;
+            header.appendChild(roleB);
+            header.appendChild(document.createTextNode(` [${result.topic}]`));
+
+            const meta1 = document.createElement('div');
+            meta1.className = 'message-meta';
+            meta1.textContent = new Date(result.timestamp).toLocaleString();
+
+            const meta2 = document.createElement('div');
+            meta2.className = 'message-meta';
+            meta2.textContent = `Importance: ${result.importance} | Tags: ${result.tags.join(", ")}`;
+
+            const text = document.createElement('div');
+            text.style.fontSize = '0.9em';
+            text.style.marginTop = '4px';
+            text.textContent = result.text; // Safely set text content
+
+            const meta3 = document.createElement('div');
+            meta3.className = 'message-meta';
+            const keywordPart = result.keyword_score ? ` | Keywords: ${result.keyword_score.toFixed(4)}` : '';
+            meta3.textContent = `Similarity: ${result.distance.toFixed(4)}${keywordPart} | Final Score: ${result.hybrid_score.toFixed(4)}`;
+
+            div.appendChild(header);
+            div.appendChild(meta1);
+            div.appendChild(meta2);
+            div.appendChild(text);
+            div.appendChild(meta3);
+            panel.appendChild(div);
+          });
+        })
+        .catch(err => {
+          const panel = document.getElementById("retrieval_panel");
+          panel.innerHTML = "";
+          panel.style.color = "#ff6b6b";
+          panel.textContent = `Error fetching retrieval data: ${err.message}`;
+          console.error("Retrieval inspector error:", err);
+        });
+    }
+
+    socket.on("bot_message", function(data) {
+      addMessageToChatbox("Bot", data.message);
+      loadMemoryPanel(); // Refresh memory panel after bot responds
+    });
+
+    socket.on("display_user_message", function(data) {
+      addMessageToChatbox("You", data.message);
+      
+      // Also fetch retrieval data when messages come from external sources (TTS, webhook)
+      console.log("External message received, fetching retrieval data for:", data.message);
+      const panel = document.getElementById("retrieval_panel");
+      panel.textContent = "Loading retrieval data...";
+      
+      fetch(`/api/retrieve_inspect?q=${encodeURIComponent(data.message)}`)
+        .then(res => {
+          console.log("Retrieval API response status:", res.status);
+          if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          return res.json();
+        })
+        .then(data => {
+          console.log("Retrieval API data:", data);
+          panel.innerHTML = ""; // Clear previous results
+
+          if (!data.results || data.results.length === 0) {
+            panel.textContent = "No matching memories found for this query.";
+            return;
+          }
+
+                     data.results.forEach(result => {
+             const div = document.createElement("div");
+             div.style.borderBottom = "1px solid #ddd";
+             div.style.marginBottom = "8px";
+             div.style.paddingBottom = "4px";
+
+             const header = document.createElement('div');
+             const roleB = document.createElement('b');
+             roleB.textContent = result.role;
+             header.appendChild(roleB);
+             header.appendChild(document.createTextNode(` [${result.topic}]`));
+
+             const meta1 = document.createElement('div');
+             meta1.className = 'message-meta';
+             meta1.textContent = new Date(result.timestamp).toLocaleString();
+
+             const meta2 = document.createElement('div');
+             meta2.className = 'message-meta';
+             meta2.textContent = `Importance: ${result.importance} | Tags: ${result.tags.join(", ")}`;
+
+             const text = document.createElement('div');
+             text.style.fontSize = '0.9em';
+             text.style.marginTop = '4px';
+             text.textContent = result.text;
+
+             const meta3 = document.createElement('div');
+             meta3.className = 'message-meta';
+             const keywordPart = result.keyword_score ? ` | Keywords: ${result.keyword_score.toFixed(4)}` : '';
+             meta3.textContent = `Similarity: ${result.distance.toFixed(4)}${keywordPart} | Final Score: ${result.hybrid_score.toFixed(4)}`;
+
+             div.appendChild(header);
+             div.appendChild(meta1);
+             div.appendChild(meta2);
+             div.appendChild(text);
+             div.appendChild(meta3);
+             panel.appendChild(div);
+           });
+        })
+        .catch(err => {
+          const panel = document.getElementById("retrieval_panel");
+          panel.innerHTML = "";
+          panel.style.color = "#ff6b6b";
+          panel.textContent = `Error fetching retrieval data: ${err.message}`;
+          console.error("Retrieval inspector error:", err);
+        });
+    });
+
+    // Handle token count updates from server
+    socket.on("token_count", function(data) {
+      const tokenCountElement = document.getElementById("token_count");
+      const tokens = data.tokens;
+      
+      // Update the token count
+      tokenCountElement.textContent = tokens.toLocaleString();
+      
+      // Color coding based on 32K context limit
+      const maxTokens = 32000;
+      const percentage = (tokens / maxTokens) * 100;
+      
+      // Remove existing color classes
+      tokenCountElement.classList.remove("token-safe", "token-warning", "token-danger");
+      
+      // Add appropriate color class
+      if (percentage < 80) {
+        tokenCountElement.classList.add("token-safe");
+      } else if (percentage < 90) {
+        tokenCountElement.classList.add("token-warning");
+      } else {
+        tokenCountElement.classList.add("token-danger");
+      }
+      
+      console.log(`Token count updated: ${tokens} tokens (${percentage.toFixed(1)}% of ${maxTokens} limit)`);
+    });
+
+    // Handle KV stats updates from server
+    socket.on('kv_stats', function (data) {
+      const setText = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = (val === null || val === undefined) ? '-' : String(val);
+      };
+      setText('kv_tail_mode', data.tail_mode ? 'true' : 'false');
+      setText('kv_prompt_eval_count', data.prompt_eval_count);
+      setText('kv_eval_count', data.eval_count);
+      setText('kv_total_ms', data.total_duration_ms);
+      setText('kv_prompt_ms', data.prompt_eval_duration_ms);
+      setText('kv_eval_ms', data.eval_duration_ms);
+      setText('kv_load_ms', data.load_duration_ms);
+    });
+
+    console.log("Setting up event listeners...");
+    document.getElementById("user_input").addEventListener("keyup", function (e) {
+      console.log("Key pressed:", e.key);
+      if (e.key === "Enter") {
+        console.log("Enter key detected, calling sendMessage...");
+        sendMessage();
+      }
+    });
+    console.log("Event listeners set up!");
+
+    async function loadMemoryPanel() {
+      const res = await fetch("/api/memory");
+      const data = await res.json();
+      const panel = document.getElementById("memory_panel");
+      panel.innerHTML = ""; // Clear previous content
+
+      data.chunks.forEach(chunk => {
+        const div = document.createElement("div");
+        div.style.borderBottom = "1px solid #ddd";
+        div.style.marginBottom = "8px";
+        div.style.paddingBottom = "4px";
+
+        const timestamp = chunk.timestamp ? new Date(chunk.timestamp).toLocaleString() : "No timestamp";
+        
+        const header = document.createElement('div');
+        const roleB = document.createElement('b');
+        roleB.textContent = chunk.role;
+        header.appendChild(roleB);
+        header.appendChild(document.createTextNode(` [${chunk.topic}]`));
+
+        const meta1 = document.createElement('div');
+        meta1.className = 'message-meta';
+        meta1.textContent = timestamp;
+
+        const meta2 = document.createElement('div');
+        meta2.className = 'message-meta';
+        meta2.textContent = `Importance: ${chunk.importance} | Tags: ${chunk.tags.join(", ")}`;
+
+        div.appendChild(header);
+        div.appendChild(meta1);
+        div.appendChild(meta2);
+
+        const textContainer = document.createElement('div');
+        textContainer.className = 'memory-text';
+        
+        const isTruncated = chunk.text.length > 100;
+
+        if (isTruncated) {
+            const shortText = chunk.text.slice(0, 100);
+            const moreText = chunk.text.slice(100);
+
+            const shortSpan = document.createElement('span');
+            shortSpan.textContent = shortText;
+
+            const dotsSpan = document.createElement('span');
+            dotsSpan.className = 'dots';
+            dotsSpan.textContent = '...';
+
+            const moreSpan = document.createElement('span');
+            moreSpan.className = 'more';
+            moreSpan.style.display = 'none';
+            moreSpan.textContent = moreText;
+
+            const moreButton = document.createElement('button');
+            moreButton.textContent = '[more]';
+            moreButton.style.marginLeft = '4px';
+            moreButton.onclick = () => {
+                dotsSpan.style.display = 'none';
+                moreSpan.style.display = 'inline';
+                moreButton.style.display = 'none';
+            };
+
+            textContainer.appendChild(shortSpan);
+            textContainer.appendChild(dotsSpan);
+            textContainer.appendChild(moreSpan);
+            textContainer.appendChild(moreButton);
+        } else {
+            textContainer.textContent = chunk.text;
+        }
+
+        div.appendChild(textContainer);
+        panel.appendChild(div);
+      });
+
+      document.getElementById("session_id").innerText = data.session_id || "unknown";
+    }
+
+    loadMemoryPanel();
+  </script>
+</body>
+</html> 
