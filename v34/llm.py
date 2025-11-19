@@ -530,7 +530,7 @@ def calculate_importance(text: str, topic: str, tags: list) -> int:
     
     # === TAG-BASED ADJUSTMENTS ===
     high_importance_tags = ["stating facts", "personal data", "referencing past", "urgent matters", "technical issues"]
-    low_importance_tags = ["testing memory", "asking questions", "chatting casually"]
+    low_importance_tags = ["asking questions", "chatting casually"]  # Removed "testing memory" - too many false positives
     
     # Stronger penalty for asking questions
     if "asking questions" in tags and not ("stating facts" in tags):
