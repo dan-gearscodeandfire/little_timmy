@@ -305,14 +305,12 @@ def process_user_message(user_input: str):
 
     utils.debug_print(f"*** Debug: LLM response received: {ai_response_text}")
 
-    # 6. Add assistant's response to history and store if important
+    # 6. Add assistant's response to history (but DO NOT store in vector memory)
     utils.conversation_history.append({"role": "assistant", "content": ai_response_text})
     
-    final_importance = max(0, ai_metadata.get("importance", 0) - 3)
-    if final_importance >= 2:
-        memory.chunk_and_store_text(ai_response_text, role="assistant", metadata=ai_metadata, session_id=SESSION_ID)
-    else:
-        utils.debug_print(f"*** Debug: Skipped storing assistant message: final importance {final_importance} < 2.")
+    # DISABLED: Do not store assistant responses - they can contain hallucinations
+    # Only user messages are ground truth and should be stored
+    utils.debug_print(f"*** Debug: Assistant response added to conversation history only (not stored in vector memory)")
 
     utils.debug_print(f"--- Total process_user_message took: {time.time() - start_time:.2f}s")
     return ai_response_text

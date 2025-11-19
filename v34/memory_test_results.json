@@ -1,14 +1,14 @@
 {
-  "timestamp": "2025-11-18T23:25:00.712309",
-  "session_id": "test_session_ac4f1915-6227-41ad-b089-070cfe7b9013",
-  "total_duration_seconds": 14.48,
+  "timestamp": "2025-11-19T00:57:27.806701",
+  "session_id": "test_session_6cec452d-56fb-438d-ae74-b8a401db004e",
+  "total_duration_seconds": 13.87,
   "test_categories": {
     "classification": {
       "category": "Classification Accuracy",
       "total_tests": 6,
-      "passed": 5,
-      "failed": 1,
-      "pass_rate": 83.3,
+      "passed": 4,
+      "failed": 2,
+      "pass_rate": 66.7,
       "test_results": [
         {
           "test_number": 1,
@@ -37,7 +37,7 @@
             "tags_present": true
           },
           "passed": true,
-          "duration_ms": 4096.89
+          "duration_ms": 3967.98
         },
         {
           "test_number": 2,
@@ -66,7 +66,7 @@
             "tags_present": true
           },
           "passed": true,
-          "duration_ms": 29.64
+          "duration_ms": 29.15
         },
         {
           "test_number": 3,
@@ -96,7 +96,7 @@
             "tags_present": true
           },
           "passed": true,
-          "duration_ms": 29.61
+          "duration_ms": 29.12
         },
         {
           "test_number": 4,
@@ -111,7 +111,7 @@
           },
           "actual": {
             "topic": "referencing past",
-            "importance": 1,
+            "importance": 5,
             "tags": [
               "referencing past",
               "testing memory",
@@ -120,11 +120,11 @@
           },
           "checks": {
             "topic_match": true,
-            "importance_in_range": true,
+            "importance_in_range": false,
             "tags_present": true
           },
-          "passed": true,
-          "duration_ms": 28.16
+          "passed": false,
+          "duration_ms": 27.85
         },
         {
           "test_number": 5,
@@ -140,7 +140,7 @@
           },
           "actual": {
             "topic": "project activity",
-            "importance": 3,
+            "importance": 5,
             "tags": [
               "project activity",
               "referencing past",
@@ -155,7 +155,7 @@
             "tags_present": true
           },
           "passed": true,
-          "duration_ms": 28.94
+          "duration_ms": 29.53
         },
         {
           "test_number": 6,
@@ -185,7 +185,7 @@
             "tags_present": false
           },
           "passed": false,
-          "duration_ms": 29.2
+          "duration_ms": 28.95
         }
       ]
     },
@@ -205,8 +205,8 @@
           "was_retrieved": true,
           "chunks_found": 5,
           "passed": true,
-          "store_duration_ms": 2362.4,
-          "retrieve_duration_ms": 23.02,
+          "store_duration_ms": 2044.65,
+          "retrieve_duration_ms": 37.6,
           "retrieved_texts": [
             "My cat's name is Winston and he is 3 years old...",
             "What is my cats name?...",
@@ -222,12 +222,12 @@
           "was_retrieved": true,
           "chunks_found": 5,
           "passed": true,
-          "store_duration_ms": 573.76,
-          "retrieve_duration_ms": 59.52,
+          "store_duration_ms": 582.04,
+          "retrieve_duration_ms": 19.85,
           "retrieved_texts": [
             "I welded the chassis using TIG welding on November 1st...",
-            "I'm actually, I'm holding a drill right now and that's me in the workshop....",
-            "That's correct. I actually did do that..."
+            "All right, little Timmy. We're making progress on our shop heater....",
+            "That's not at all what the problem is. I'm going to take a flap wheel to this when my neighbors aren..."
           ]
         },
         {
@@ -239,8 +239,8 @@
           "was_retrieved": false,
           "chunks_found": 5,
           "passed": true,
-          "store_duration_ms": 397.79,
-          "retrieve_duration_ms": 51.68,
+          "store_duration_ms": 399.03,
+          "retrieve_duration_ms": 14.88,
           "retrieved_texts": [
             "My cat's name is Winston and he is 3 years old...",
             "What is my cats name?...",
@@ -256,8 +256,8 @@
           "was_retrieved": true,
           "chunks_found": 1,
           "passed": true,
-          "store_duration_ms": 476.16,
-          "retrieve_duration_ms": 12.19,
+          "store_duration_ms": 466.87,
+          "retrieve_duration_ms": 11.65,
           "retrieved_texts": [
             "My wife's name is Erin..."
           ]
@@ -287,8 +287,8 @@
           "retrieved_texts": [
             "Winston is my cat's name...",
             "My cat's name is Winston...",
-            "My cat's name is Winston and he is 3 years old...",
             "My wife's name is Erin...",
+            "My cat's name is Winston and he is 3 years old...",
             "No, that's actually you, dude. That's you. You don't know my cat's name. Say my ..."
           ]
         },
@@ -351,9 +351,9 @@
     "importance": {
       "category": "Importance Scoring",
       "total_tests": 6,
-      "passed": 6,
-      "failed": 0,
-      "pass_rate": 100.0,
+      "passed": 5,
+      "failed": 1,
+      "pass_rate": 83.3,
       "test_results": [
         {
           "test_number": 1,
@@ -370,7 +370,7 @@
           ],
           "in_range": true,
           "passed": true,
-          "duration_ms": 39.92
+          "duration_ms": 31.24
         },
         {
           "test_number": 2,
@@ -387,14 +387,14 @@
           ],
           "in_range": true,
           "passed": true,
-          "duration_ms": 37.29
+          "duration_ms": 30.35
         },
         {
           "test_number": 3,
           "input": "I finally fixed the motor controller bug",
           "reason": "Technical breakthrough (but testing memory tag interferes)",
           "expected_range": "1-3",
-          "actual_importance": 1,
+          "actual_importance": 5,
           "actual_topic": "technical issues",
           "actual_tags": [
             "technical issues",
@@ -402,9 +402,9 @@
             "referencing past",
             "testing memory"
           ],
-          "in_range": true,
-          "passed": true,
-          "duration_ms": 40.96
+          "in_range": false,
+          "passed": false,
+          "duration_ms": 29.85
         },
         {
           "test_number": 4,
@@ -422,14 +422,14 @@
           ],
           "in_range": true,
           "passed": true,
-          "duration_ms": 41.71
+          "duration_ms": 29.99
         },
         {
           "test_number": 5,
           "input": "Don't forget the meeting tomorrow at 2pm",
           "reason": "Urgent + deadline = high importance",
           "expected_range": "3-5",
-          "actual_importance": 3,
+          "actual_importance": 5,
           "actual_topic": "project activity",
           "actual_tags": [
             "project activity",
@@ -440,7 +440,7 @@
           ],
           "in_range": true,
           "passed": true,
-          "duration_ms": 33.51
+          "duration_ms": 29.75
         },
         {
           "test_number": 6,
@@ -461,11 +461,11 @@
   },
   "overall_summary": {
     "total_tests": 20,
-    "total_passed": 17,
-    "total_failed": 3,
-    "overall_pass_rate": 85.0,
+    "total_passed": 15,
+    "total_failed": 5,
+    "overall_pass_rate": 75.0,
     "categories_tested": 5,
-    "status": "FAILED (3 failures)"
+    "status": "FAILED (5 failures)"
   },
   "cleanup": {
     "chunks_deleted": 14,
