@@ -451,9 +451,10 @@ def calculate_importance(text: str, topic: str, tags: list) -> int:
         "memory test", "have i mentioned", "have i told",
         "tell me about my", "do you know my", "recall my"
     ]
-    # Only penalize if "testing memory" tag is present (more reliable than keyword)
+    # Only penalize based on explicit testing question phrases
+    # Removed "testing memory" tag check - GLiClass applies it too broadly
     # Removed bare "testing" keyword - too many false positives (e.g., "I tested the motor")
-    is_testing_question = any(phrase in text_lower for phrase in testing_questions) or "testing memory" in tags
+    is_testing_question = any(phrase in text_lower for phrase in testing_questions)
     
     # General question indicators (less severe penalty)
     question_indicators = ["what", "where", "how", "why", "can you", "do you", "tell me"]
