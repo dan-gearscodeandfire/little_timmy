@@ -1,0 +1,474 @@
+{
+  "timestamp": "2025-11-18T23:19:56.496338",
+  "session_id": "test_session_23389ad1-3ce9-4e59-88fa-ac8093daf236",
+  "total_duration_seconds": 14.06,
+  "test_categories": {
+    "classification": {
+      "category": "Classification Accuracy",
+      "total_tests": 6,
+      "passed": 5,
+      "failed": 1,
+      "pass_rate": 83.3,
+      "test_results": [
+        {
+          "test_number": 1,
+          "input": "My cat's name is Winston",
+          "description": "Factual personal information",
+          "expected": {
+            "topic": "stating facts or personal data",
+            "importance": ">=4",
+            "tags": [
+              "personal data"
+            ]
+          },
+          "actual": {
+            "topic": "personal data",
+            "importance": 5,
+            "tags": [
+              "personal data",
+              "referencing past",
+              "project activity",
+              "future planning"
+            ]
+          },
+          "checks": {
+            "topic_match": true,
+            "importance_in_range": true,
+            "tags_present": true
+          },
+          "passed": true,
+          "duration_ms": 4051.59
+        },
+        {
+          "test_number": 2,
+          "input": "What is my cat's name?",
+          "description": "Testing question (should not store)",
+          "expected": {
+            "topic": "asking questions",
+            "importance": "<=1",
+            "tags": [
+              "asking questions"
+            ]
+          },
+          "actual": {
+            "topic": "asking questions",
+            "importance": 0,
+            "tags": [
+              "asking questions",
+              "personal data",
+              "referencing past",
+              "project activity"
+            ]
+          },
+          "checks": {
+            "topic_match": true,
+            "importance_in_range": true,
+            "tags_present": true
+          },
+          "passed": true,
+          "duration_ms": 28.87
+        },
+        {
+          "test_number": 3,
+          "input": "I'm going to weld the chassis this weekend",
+          "description": "Project planning",
+          "expected": {
+            "topic": "project activity",
+            "importance": ">=3",
+            "tags": [
+              "project activity",
+              "future planning"
+            ]
+          },
+          "actual": {
+            "topic": "project activity",
+            "importance": 5,
+            "tags": [
+              "project activity",
+              "future planning",
+              "referencing past",
+              "technical issues"
+            ]
+          },
+          "checks": {
+            "topic_match": true,
+            "importance_in_range": true,
+            "tags_present": true
+          },
+          "passed": true,
+          "duration_ms": 28.78
+        },
+        {
+          "test_number": 4,
+          "input": "You really botched that weld yesterday",
+          "description": "Humor with callback",
+          "expected": {
+            "topic": "making jokes or referencing past",
+            "importance": "<=3",
+            "tags": [
+              "referencing past"
+            ]
+          },
+          "actual": {
+            "topic": "referencing past",
+            "importance": 1,
+            "tags": [
+              "referencing past",
+              "testing memory",
+              "project activity"
+            ]
+          },
+          "checks": {
+            "topic_match": true,
+            "importance_in_range": true,
+            "tags_present": true
+          },
+          "passed": true,
+          "duration_ms": 27.97
+        },
+        {
+          "test_number": 5,
+          "input": "Remember to finish the report by tomorrow",
+          "description": "Urgent reminder",
+          "expected": {
+            "topic": "urgent matters or future planning or project activity",
+            "importance": ">=2",
+            "tags": [
+              "future planning",
+              "urgent matters"
+            ]
+          },
+          "actual": {
+            "topic": "project activity",
+            "importance": 2,
+            "tags": [
+              "project activity",
+              "referencing past",
+              "testing memory",
+              "future planning",
+              "urgent matters"
+            ]
+          },
+          "checks": {
+            "topic_match": true,
+            "importance_in_range": true,
+            "tags_present": true
+          },
+          "passed": true,
+          "duration_ms": 28.34
+        },
+        {
+          "test_number": 6,
+          "input": "How's the weather?",
+          "description": "Small talk",
+          "expected": {
+            "topic": "chatting casually",
+            "importance": "<=1",
+            "tags": [
+              "chatting casually"
+            ]
+          },
+          "actual": {
+            "topic": "asking questions",
+            "importance": 0,
+            "tags": [
+              "asking questions",
+              "referencing past",
+              "project activity",
+              "personal data",
+              "urgent matters"
+            ]
+          },
+          "checks": {
+            "topic_match": false,
+            "importance_in_range": true,
+            "tags_present": false
+          },
+          "passed": false,
+          "duration_ms": 28.49
+        }
+      ]
+    },
+    "retrieval": {
+      "category": "Retrieval Precision",
+      "total_tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "pass_rate": 100.0,
+      "test_results": [
+        {
+          "test_number": 1,
+          "description": "Retrieve fact when asked direct question",
+          "stored_text": "My cat's name is Winston and he is 3 years old",
+          "query": "What is my cat's name?",
+          "expected_retrieval": true,
+          "was_retrieved": true,
+          "chunks_found": 5,
+          "passed": true,
+          "store_duration_ms": 2227.84,
+          "retrieve_duration_ms": 55.3,
+          "retrieved_texts": [
+            "My cat's name is Winston and he is 3 years old...",
+            "What is my cats name?...",
+            "No, that's actually you, dude. That's you. You don't know my cat's name. Say my cat's name right now..."
+          ]
+        },
+        {
+          "test_number": 2,
+          "description": "Retrieve date-specific project fact",
+          "stored_text": "I welded the chassis using TIG welding on November 1st",
+          "query": "When did I weld the chassis?",
+          "expected_retrieval": true,
+          "was_retrieved": true,
+          "chunks_found": 5,
+          "passed": true,
+          "store_duration_ms": 587.42,
+          "retrieve_duration_ms": 33.69,
+          "retrieved_texts": [
+            "I welded the chassis using TIG welding on November 1st...",
+            "I'm actually, I'm holding a drill right now and that's me in the workshop....",
+            "That's correct. I actually did do that..."
+          ]
+        },
+        {
+          "test_number": 3,
+          "description": "Should NOT retrieve unrelated content",
+          "stored_text": "The propane tank is stored in the garage",
+          "query": "Tell me about my cat",
+          "expected_retrieval": false,
+          "was_retrieved": false,
+          "chunks_found": 5,
+          "passed": true,
+          "store_duration_ms": 405.21,
+          "retrieve_duration_ms": 14.67,
+          "retrieved_texts": [
+            "My cat's name is Winston and he is 3 years old...",
+            "What is my cats name?...",
+            "Tell me about my pets and my family..."
+          ]
+        },
+        {
+          "test_number": 4,
+          "description": "Retrieve personal relationship information",
+          "stored_text": "My wife's name is Erin",
+          "query": "Who is Erin?",
+          "expected_retrieval": true,
+          "was_retrieved": true,
+          "chunks_found": 1,
+          "passed": true,
+          "store_duration_ms": 463.93,
+          "retrieve_duration_ms": 11.89,
+          "retrieved_texts": [
+            "My wife's name is Erin..."
+          ]
+        }
+      ]
+    },
+    "deduplication": {
+      "category": "Deduplication",
+      "total_tests": 2,
+      "passed": 1,
+      "failed": 1,
+      "pass_rate": 50.0,
+      "test_results": [
+        {
+          "test_number": 1,
+          "description": "Should deduplicate very similar statements",
+          "stored_messages": [
+            "My cat is named Winston",
+            "My cat's name is Winston",
+            "Winston is my cat's name"
+          ],
+          "query": "What is my cat's name?",
+          "max_expected": 2,
+          "actual_retrieved": 3,
+          "total_chunks": 5,
+          "passed": false,
+          "retrieved_texts": [
+            "Winston is my cat's name...",
+            "My cat's name is Winston...",
+            "My cat's name is Winston and he is 3 years old...",
+            "My wife's name is Erin...",
+            "No, that's actually you, dude. That's you. You don't know my cat's name. Say my ..."
+          ]
+        },
+        {
+          "test_number": 2,
+          "description": "Should keep semantically different variants",
+          "stored_messages": [
+            "I like pizza",
+            "I enjoy eating pizza",
+            "Pizza is my favorite food"
+          ],
+          "query": "What food do I like?",
+          "max_expected": 3,
+          "actual_retrieved": 3,
+          "total_chunks": 5,
+          "passed": true,
+          "retrieved_texts": [
+            "Pizza is my favorite food...",
+            "I enjoy eating pizza...",
+            "I like pizza...",
+            "I am wearing a beanie, that's correct. But there are no energy drink cans in her...",
+            "Okay, little Timmy, you're doing great. I'm gonna go eat some dinner right now a..."
+          ]
+        }
+      ]
+    },
+    "recency": {
+      "category": "Recency Bias",
+      "total_tests": 2,
+      "passed": 1,
+      "failed": 1,
+      "pass_rate": 50.0,
+      "test_results": [
+        {
+          "test_number": 1,
+          "description": "Recent fact should outrank old fact",
+          "old_fact": "Project X uses Python",
+          "new_fact": "Project X now uses Rust",
+          "query": "What language does Project X use?",
+          "old_position": 1,
+          "new_position": 0,
+          "expected_preference": "new",
+          "passed": true,
+          "total_retrieved": 5
+        },
+        {
+          "test_number": 2,
+          "description": "Recent activity should be prioritized",
+          "old_fact": "I finished the welding yesterday",
+          "new_fact": "I started painting today",
+          "query": "What am I working on?",
+          "old_position": null,
+          "new_position": null,
+          "expected_preference": "new",
+          "passed": false,
+          "total_retrieved": 5
+        }
+      ]
+    },
+    "importance": {
+      "category": "Importance Scoring",
+      "total_tests": 6,
+      "passed": 4,
+      "failed": 2,
+      "pass_rate": 66.7,
+      "test_results": [
+        {
+          "test_number": 1,
+          "input": "My wife's name is Erin",
+          "reason": "Personal + factual = high importance",
+          "expected_range": "4-5",
+          "actual_importance": 5,
+          "actual_topic": "personal data",
+          "actual_tags": [
+            "personal data",
+            "referencing past",
+            "project activity",
+            "future planning"
+          ],
+          "in_range": true,
+          "passed": true,
+          "duration_ms": 32.76
+        },
+        {
+          "test_number": 2,
+          "input": "What is my wife's name?",
+          "reason": "Testing question = very low importance",
+          "expected_range": "0-1",
+          "actual_importance": 0,
+          "actual_topic": "asking questions",
+          "actual_tags": [
+            "asking questions",
+            "personal data",
+            "referencing past",
+            "project activity"
+          ],
+          "in_range": true,
+          "passed": true,
+          "duration_ms": 29.41
+        },
+        {
+          "test_number": 3,
+          "input": "I finally fixed the motor controller bug",
+          "reason": "Technical breakthrough = high importance",
+          "expected_range": "3-5",
+          "actual_importance": 1,
+          "actual_topic": "technical issues",
+          "actual_tags": [
+            "technical issues",
+            "project activity",
+            "referencing past",
+            "testing memory"
+          ],
+          "in_range": false,
+          "passed": false,
+          "duration_ms": 29.62
+        },
+        {
+          "test_number": 4,
+          "input": "Hello",
+          "reason": "Small talk = low importance",
+          "expected_range": "0-1",
+          "actual_importance": 0,
+          "actual_topic": "asking questions",
+          "actual_tags": [
+            "asking questions",
+            "referencing past",
+            "personal data",
+            "project activity",
+            "future planning"
+          ],
+          "in_range": true,
+          "passed": true,
+          "duration_ms": 29.41
+        },
+        {
+          "test_number": 5,
+          "input": "Don't forget the meeting tomorrow at 2pm",
+          "reason": "Urgent + deadline = high importance",
+          "expected_range": "4-5",
+          "actual_importance": 2,
+          "actual_topic": "project activity",
+          "actual_tags": [
+            "project activity",
+            "urgent matters",
+            "referencing past",
+            "testing memory",
+            "future planning"
+          ],
+          "in_range": false,
+          "passed": false,
+          "duration_ms": 29.66
+        },
+        {
+          "test_number": 6,
+          "input": "This is a memory test",
+          "reason": "Test phrase = zero importance",
+          "expected_range": "0-0",
+          "actual_importance": 0,
+          "actual_topic": "testing",
+          "actual_tags": [
+            "testing memory"
+          ],
+          "in_range": true,
+          "passed": true,
+          "duration_ms": 0.0
+        }
+      ]
+    }
+  },
+  "overall_summary": {
+    "total_tests": 20,
+    "total_passed": 15,
+    "total_failed": 5,
+    "overall_pass_rate": 75.0,
+    "categories_tested": 5,
+    "status": "FAILED (5 failures)"
+  },
+  "cleanup": {
+    "chunks_deleted": 14,
+    "parents_deleted": 14
+  }
+}

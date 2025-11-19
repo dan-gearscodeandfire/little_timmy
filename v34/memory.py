@@ -308,10 +308,23 @@ def retrieve_unique_relevant_chunks(query: str, k: int = config.NUM_RETRIEVED_CH
     retrieved_chunks = retrieve_similar_chunks_from_parents(query_embedding, parent_ids, k=k * 2, query_text=query)
     utils.debug_print(f"*** Debug: Retrieved {len(retrieved_chunks)} candidate chunks from parents.")
 
-    # Step 3: Filter for uniqueness against recent history.
+    # Step 3: Filter for uniqueness against recent history AND other retrieved chunks.
     unique_chunks = []
     for chunk in retrieved_chunks:
-        if not is_duplicate_chunk(chunk["text"], utils.conversation_history):
+        # Check against conversation history
+        if is_duplicate_chunk(chunk["text"], utils.conversation_history):
+            continue
+        
+        # Check against already-selected chunks (cross-chunk deduplication)
+        is_duplicate_of_selected = False
+        for selected in unique_chunks:
+            ratio = difflib.SequenceMatcher(None, chunk["text"], selected["text"]).ratio()
+            if ratio >= 0.75:  # Balanced threshold - catches similar but not semantically different
+                utils.debug_print(f"*** Debug: Skipping duplicate chunk (similarity to selected: {ratio:.2f})")
+                is_duplicate_of_selected = True
+                break
+        
+        if not is_duplicate_of_selected:
             unique_chunks.append(chunk)
 
     utils.debug_print(f"*** Debug: Returning {len(unique_chunks[:k])} unique, relevant chunks.")
