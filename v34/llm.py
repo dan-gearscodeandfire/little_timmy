@@ -516,7 +516,7 @@ def calculate_importance(text: str, topic: str, tags: list) -> int:
         
     # Default based on topic
     else:
-        if topic in ["projects", "tasks", "deadline", "fix"]:
+        if topic in ["projects", "tasks", "deadline", "fix", "technical issues"]:
             base_importance = 3
         elif topic in ["callback", "technical details"]:
             base_importance = 2
@@ -538,11 +538,11 @@ def calculate_importance(text: str, topic: str, tags: list) -> int:
         base_importance = max(0, base_importance - 1)
     
     # === FINAL ADJUSTMENTS ===
-    # Urgent content gets a boost
-    urgent_keywords = ["urgent", "important", "asap", "deadline", "tomorrow", "today", "critical", "remember this"]
+    # Urgent content gets a stronger boost
+    urgent_keywords = ["urgent", "important", "asap", "deadline", "tomorrow", "today", "critical", "remember this", "don't forget"]
     has_urgent = any(keyword in text_lower for keyword in urgent_keywords)
-    if has_urgent:
-        base_importance = min(5, base_importance + 1)
+    if has_urgent or "urgent matters" in tags:
+        base_importance = min(5, base_importance + 2)  # Increased from +1 to +2
     
     # Special case: humor needs context to be important
     if topic == "humor" and not (has_temporal_context or provides_facts):
