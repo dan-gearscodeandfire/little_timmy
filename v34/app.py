@@ -326,6 +326,11 @@ def handle_user_message(data):
 def index():
     return render_template("chat.html")
 
+@app.route("/tests")
+def memory_tests_page():
+    """Render the memory tests interface."""
+    return render_template("memory_tests.html")
+
 @app.route("/api/webhook", methods=['POST'])
 def handle_webhook():
     data = request.json
@@ -406,6 +411,24 @@ def get_kv_stats():
         "count": len(items),
         "stats": items
     }
+
+@app.route("/api/memory/test", methods=['GET', 'POST'])
+def run_memory_tests():
+    """Run comprehensive memory system tests and return results."""
+    try:
+        # Import here to avoid loading unless needed
+        from memory_test_suite import run_memory_tests as run_tests
+        
+        # Check if cleanup should be performed
+        cleanup = request.args.get('cleanup', 'true').lower() == 'true'
+        
+        utils.debug_print(f"*** Running memory test suite (cleanup={cleanup})...")
+        results = run_tests(cleanup_after=cleanup)
+        
+        return results, 200
+    except Exception as e:
+        utils.debug_print(f"*** Memory test suite error: {e}")
+        return {"error": f"Test suite failed: {e}", "status": "FAILED"}, 500
 
 @app.route("/api/memory/cleanup", methods=['POST'])
 def cleanup_old_memories():

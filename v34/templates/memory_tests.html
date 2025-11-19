@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory System Tests - Little Timmy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      opacity: 0.9;
+      font-size: 1.1em;
+    }
+
+    .controls {
+      padding: 20px 30px;
+      background: #f8f9fa;
+      border-bottom: 2px solid #e9ecef;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .cleanup-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      margin-left: auto;
+    }
+
+    .status.running {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status.passed {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status.failed {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .results-container {
+      padding: 30px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .summary-card {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      border: 2px solid #dee2e6;
+    }
+
+    .summary-card .value {
+      font-size: 2.5em;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .summary-card .label {
+      color: #6c757d;
+      font-size: 0.9em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .summary-card.passed .value {
+      color: #28a745;
+    }
+
+    .summary-card.failed .value {
+      color: #dc3545;
+    }
+
+    .category-section {
+      margin-bottom: 30px;
+      border: 2px solid #dee2e6;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .category-header {
+      background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .category-header:hover {
+      background: linear-gradient(135deg, #343a40 0%, #212529 100%);
+    }
+
+    .category-header h3 {
+      font-size: 1.3em;
+    }
+
+    .category-stats {
+      font-size: 0.9em;
+      opacity: 0.9;
+    }
+
+    .test-results {
+      padding: 20px;
+      background: white;
+    }
+
+    .test-result {
+      border-left: 4px solid #6c757d;
+      padding: 15px;
+      margin-bottom: 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .test-result.passed {
+      border-left-color: #28a745;
+      background: #f1f9f4;
+    }
+
+    .test-result.failed {
+      border-left-color: #dc3545;
+      background: #fdf4f5;
+    }
+
+    .test-result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .test-title {
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+
+    .test-badge {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: 600;
+    }
+
+    .test-badge.passed {
+      background: #28a745;
+      color: white;
+    }
+
+    .test-badge.failed {
+      background: #dc3545;
+      color: white;
+    }
+
+    .test-details {
+      font-size: 0.95em;
+      color: #495057;
+      line-height: 1.6;
+    }
+
+    .test-details dt {
+      font-weight: 600;
+      margin-top: 8px;
+      color: #212529;
+    }
+
+    .test-details dd {
+      margin-left: 20px;
+      margin-bottom: 5px;
+    }
+
+    .code-block {
+      background: #272822;
+      color: #f8f8f2;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      overflow-x: auto;
+      margin: 5px 0;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #667eea;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.85em;
+      margin: 2px;
+    }
+
+    .importance-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
+    .importance-0, .importance-1 {
+      background: #6c757d;
+      color: white;
+    }
+
+    .importance-2, .importance-3 {
+      background: #ffc107;
+      color: #212529;
+    }
+
+    .importance-4, .importance-5 {
+      background: #28a745;
+      color: white;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+      border-left: 4px solid #dc3545;
+    }
+
+    .info-box {
+      background: #d1ecf1;
+      color: #0c5460;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 20px 0;
+      border-left: 4px solid #17a2b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🧪 Memory System Tests</h1>
+      <p class="subtitle">Comprehensive evaluation of classification, storage, and retrieval</p>
+    </header>
+
+    <div class="controls">
+      <button id="runTestsBtn" onclick="runTests()">▶️ Run Test Suite</button>
+      
+      <div class="cleanup-toggle">
+        <input type="checkbox" id="cleanupCheckbox" checked>
+        <label for="cleanupCheckbox">Clean up test data after run</label>
+      </div>
+      
+      <span id="statusBadge" class="status hidden">Ready</span>
+    </div>
+
+    <div class="results-container">
+      <div id="loadingSpinner" class="hidden">
+        <div class="spinner"></div>
+        <p style="text-align: center; margin-top: 10px; color: #6c757d;">Running tests...</p>
+      </div>
+
+      <div id="errorMessage" class="hidden error-message"></div>
+
+      <div id="infoBox" class="info-box">
+        <strong>ℹ️ About This Test Suite:</strong>
+        <ul style="margin-top: 10px; margin-left: 20px;">
+          <li>Tests classification accuracy (importance scoring, tagging)</li>
+          <li>Tests retrieval precision (can it find the right memories?)</li>
+          <li>Tests deduplication (filters similar chunks)</li>
+          <li>Tests recency bias (recent memories prioritized)</li>
+          <li>All test data is automatically cleaned up afterwards</li>
+        </ul>
+      </div>
+
+      <div id="resultsArea" class="hidden">
+        <!-- Summary cards -->
+        <div class="summary-grid" id="summaryCards"></div>
+        
+        <!-- Category results -->
+        <div id="categoryResults"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function runTests() {
+      const runBtn = document.getElementById('runTestsBtn');
+      const statusBadge = document.getElementById('statusBadge');
+      const loadingSpinner = document.getElementById('loadingSpinner');
+      const errorMessage = document.getElementById('errorMessage');
+      const resultsArea = document.getElementById('resultsArea');
+      const infoBox = document.getElementById('infoBox');
+      const cleanup = document.getElementById('cleanupCheckbox').checked;
+      
+      // Reset UI
+      runBtn.disabled = true;
+      statusBadge.className = 'status running';
+      statusBadge.textContent = 'Running...';
+      statusBadge.classList.remove('hidden');
+      loadingSpinner.classList.remove('hidden');
+      errorMessage.classList.add('hidden');
+      resultsArea.classList.add('hidden');
+      infoBox.classList.add('hidden');
+      
+      try {
+        const response = await fetch(`/api/memory/test?cleanup=${cleanup}`, {
+          method: 'POST'
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok || data.status === 'FAILED') {
+          throw new Error(data.error || 'Test suite failed');
+        }
+        
+        // Display results
+        displayResults(data);
+        
+        // Update status
+        const summary = data.overall_summary;
+        if (summary.total_failed === 0) {
+          statusBadge.className = 'status passed';
+          statusBadge.textContent = `✅ All Tests Passed (${summary.total_passed}/${summary.total_tests})`;
+        } else {
+          statusBadge.className = 'status failed';
+          statusBadge.textContent = `⚠️ ${summary.total_failed} Failed (${summary.total_passed}/${summary.total_tests} passed)`;
+        }
+        
+      } catch (error) {
+        console.error('Test error:', error);
+        errorMessage.textContent = `❌ Error: ${error.message}`;
+        errorMessage.classList.remove('hidden');
+        statusBadge.className = 'status failed';
+        statusBadge.textContent = '❌ Error';
+      } finally {
+        loadingSpinner.classList.add('hidden');
+        runBtn.disabled = false;
+      }
+    }
+    
+    function displayResults(data) {
+      const summaryCards = document.getElementById('summaryCards');
+      const categoryResults = document.getElementById('categoryResults');
+      const resultsArea = document.getElementById('resultsArea');
+      
+      // Clear previous results
+      summaryCards.innerHTML = '';
+      categoryResults.innerHTML = '';
+      
+      // Show results area
+      resultsArea.classList.remove('hidden');
+      
+      // Create summary cards
+      const summary = data.overall_summary;
+      summaryCards.innerHTML = `
+        <div class="summary-card">
+          <div class="label">Total Tests</div>
+          <div class="value">${summary.total_tests}</div>
+        </div>
+        <div class="summary-card passed">
+          <div class="label">Passed</div>
+          <div class="value">${summary.total_passed}</div>
+        </div>
+        <div class="summary-card failed">
+          <div class="label">Failed</div>
+          <div class="value">${summary.total_failed}</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Pass Rate</div>
+          <div class="value">${summary.overall_pass_rate}%</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Categories</div>
+          <div class="value">${summary.categories_tested}</div>
+        </div>
+        <div class="summary-card">
+          <div class="label">Duration</div>
+          <div class="value">${data.total_duration_seconds}s</div>
+        </div>
+      `;
+      
+      // Create category sections
+      const categories = data.test_categories;
+      for (const [key, category] of Object.entries(categories)) {
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'category-section';
+        
+        const passRate = category.pass_rate || 0;
+        const statusIcon = category.failed === 0 ? '✅' : '⚠️';
+        
+        categoryDiv.innerHTML = `
+          <div class="category-header" onclick="toggleCategory('${key}')">
+            <h3>${statusIcon} ${category.category}</h3>
+            <span class="category-stats">
+              ${category.passed}/${category.total_tests} passed (${passRate}%)
+            </span>
+          </div>
+          <div id="category-${key}" class="test-results">
+            ${renderTestResults(category.test_results)}
+          </div>
+        `;
+        
+        categoryResults.appendChild(categoryDiv);
+      }
+    }
+    
+    function renderTestResults(tests) {
+      if (!tests || tests.length === 0) {
+        return '<p style="padding: 20px; text-align: center; color: #6c757d;">No test results</p>';
+      }
+      
+      return tests.map(test => {
+        const passedClass = test.passed ? 'passed' : 'failed';
+        const badge = test.passed ? 'PASSED' : 'FAILED';
+        
+        return `
+          <div class="test-result ${passedClass}">
+            <div class="test-result-header">
+              <span class="test-title">Test ${test.test_number}: ${test.description || 'Unnamed test'}</span>
+              <span class="test-badge ${passedClass}">${badge}</span>
+            </div>
+            <dl class="test-details">
+              ${renderTestDetails(test)}
+            </dl>
+          </div>
+        `;
+      }).join('');
+    }
+    
+    function renderTestDetails(test) {
+      let html = '';
+      
+      // Input
+      if (test.input) {
+        html += `<dt>Input:</dt><dd><div class="code-block">${escapeHtml(test.input)}</div></dd>`;
+      }
+      
+      // Expected
+      if (test.expected) {
+        html += `<dt>Expected:</dt><dd>`;
+        if (test.expected.topic) html += `Topic: <strong>${test.expected.topic}</strong><br>`;
+        if (test.expected.importance) html += `Importance: <strong>${test.expected.importance}</strong><br>`;
+        if (test.expected.tags) html += `Tags: ${renderTags(test.expected.tags)}<br>`;
+        html += `</dd>`;
+      }
+      
+      // Actual
+      if (test.actual) {
+        html += `<dt>Actual:</dt><dd>`;
+        if (test.actual.topic) html += `Topic: <strong>${test.actual.topic}</strong><br>`;
+        if (test.actual.importance !== undefined) {
+          html += `Importance: <span class="importance-badge importance-${test.actual.importance}">${test.actual.importance}</span><br>`;
+        }
+        if (test.actual.tags) html += `Tags: ${renderTags(test.actual.tags)}<br>`;
+        html += `</dd>`;
+      }
+      
+      // Retrieval-specific details
+      if (test.stored_text) {
+        html += `<dt>Stored:</dt><dd><div class="code-block">${escapeHtml(test.stored_text)}</div></dd>`;
+      }
+      if (test.query) {
+        html += `<dt>Query:</dt><dd><div class="code-block">${escapeHtml(test.query)}</div></dd>`;
+      }
+      if (test.expected_retrieval !== undefined) {
+        html += `<dt>Expected:</dt><dd>${test.expected_retrieval ? 'Should retrieve' : 'Should NOT retrieve'}</dd>`;
+        html += `<dt>Result:</dt><dd>${test.was_retrieved ? '✅ Retrieved' : '❌ Not retrieved'}</dd>`;
+      }
+      if (test.chunks_found !== undefined) {
+        html += `<dt>Chunks Found:</dt><dd>${test.chunks_found}</dd>`;
+      }
+      
+      // Retrieved texts preview
+      if (test.retrieved_texts && test.retrieved_texts.length > 0) {
+        html += `<dt>Retrieved Chunks:</dt><dd>`;
+        test.retrieved_texts.forEach((text, idx) => {
+          html += `<div class="code-block">${idx + 1}. ${escapeHtml(text)}</div>`;
+        });
+        html += `</dd>`;
+      }
+      
+      // Recency test details
+      if (test.old_fact) {
+        html += `<dt>Old Fact:</dt><dd><div class="code-block">${escapeHtml(test.old_fact)}</div></dd>`;
+        html += `<dt>New Fact:</dt><dd><div class="code-block">${escapeHtml(test.new_fact)}</div></dd>`;
+        if (test.old_position !== null) html += `<dt>Old Position:</dt><dd>${test.old_position + 1}</dd>`;
+        if (test.new_position !== null) html += `<dt>New Position:</dt><dd>${test.new_position + 1}</dd>`;
+      }
+      
+      // Checks
+      if (test.checks) {
+        html += `<dt>Checks:</dt><dd>`;
+        for (const [check, result] of Object.entries(test.checks)) {
+          const icon = result ? '✅' : '❌';
+          html += `${icon} ${check}: ${result}<br>`;
+        }
+        html += `</dd>`;
+      }
+      
+      // Duration
+      if (test.duration_ms) {
+        html += `<dt>Duration:</dt><dd>${test.duration_ms}ms</dd>`;
+      }
+      
+      // Error
+      if (test.error) {
+        html += `<dt>Error:</dt><dd><div class="code-block" style="color: #dc3545;">${escapeHtml(test.error)}</div></dd>`;
+      }
+      
+      // Reason
+      if (test.reason) {
+        html += `<dt>Reason:</dt><dd><em>${test.reason}</em></dd>`;
+      }
+      
+      return html;
+    }
+    
+    function renderTags(tags) {
+      if (!tags || tags.length === 0) return '<em>none</em>';
+      return tags.map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('');
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+    
+    function toggleCategory(categoryKey) {
+      const element = document.getElementById(`category-${categoryKey}`);
+      if (element.style.display === 'none') {
+        element.style.display = 'block';
+      } else {
+        element.style.display = 'none';
+      }
+    }
+  </script>
+</body>
+</html>
+
