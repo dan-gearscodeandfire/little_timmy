@@ -1,7 +1,7 @@
 {
-  "timestamp": "2025-11-19T00:57:27.806701",
-  "session_id": "test_session_6cec452d-56fb-438d-ae74-b8a401db004e",
-  "total_duration_seconds": 13.87,
+  "timestamp": "2025-11-19T18:49:00.913568",
+  "session_id": "test_session_56767170-f81d-403e-b9a8-1ba4b6d38323",
+  "total_duration_seconds": 15.65,
   "test_categories": {
     "classification": {
       "category": "Classification Accuracy",
@@ -37,7 +37,7 @@
             "tags_present": true
           },
           "passed": true,
-          "duration_ms": 3967.98
+          "duration_ms": 5220.23
         },
         {
           "test_number": 2,
@@ -66,7 +66,7 @@
             "tags_present": true
           },
           "passed": true,
-          "duration_ms": 29.15
+          "duration_ms": 30.18
         },
         {
           "test_number": 3,
@@ -96,7 +96,7 @@
             "tags_present": true
           },
           "passed": true,
-          "duration_ms": 29.12
+          "duration_ms": 31.52
         },
         {
           "test_number": 4,
@@ -124,7 +124,7 @@
             "tags_present": true
           },
           "passed": false,
-          "duration_ms": 27.85
+          "duration_ms": 30.29
         },
         {
           "test_number": 5,
@@ -155,7 +155,7 @@
             "tags_present": true
           },
           "passed": true,
-          "duration_ms": 29.53
+          "duration_ms": 30.91
         },
         {
           "test_number": 6,
@@ -185,7 +185,7 @@
             "tags_present": false
           },
           "passed": false,
-          "duration_ms": 28.95
+          "duration_ms": 31.47
         }
       ]
     },
@@ -205,12 +205,12 @@
           "was_retrieved": true,
           "chunks_found": 5,
           "passed": true,
-          "store_duration_ms": 2044.65,
-          "retrieve_duration_ms": 37.6,
+          "store_duration_ms": 2579.74,
+          "retrieve_duration_ms": 77.05,
           "retrieved_texts": [
             "My cat's name is Winston and he is 3 years old...",
-            "What is my cats name?...",
-            "No, that's actually you, dude. That's you. You don't know my cat's name. Say my cat's name right now..."
+            "My first cat's name was Winston and he is a Cornish Rex....",
+            "When that response gets reviewed by my AI coding agent that's reviewing this thing, they will clearl..."
           ]
         },
         {
@@ -222,12 +222,12 @@
           "was_retrieved": true,
           "chunks_found": 5,
           "passed": true,
-          "store_duration_ms": 582.04,
-          "retrieve_duration_ms": 19.85,
+          "store_duration_ms": 569.97,
+          "retrieve_duration_ms": 18.73,
           "retrieved_texts": [
             "I welded the chassis using TIG welding on November 1st...",
-            "All right, little Timmy. We're making progress on our shop heater....",
-            "That's not at all what the problem is. I'm going to take a flap wheel to this when my neighbors aren..."
+            "So tell me about the project that I was talking about about an hour ago that I'm working on right no...",
+            "That's a very good response. Can you tell me about the heater coil project that I'm working on right..."
           ]
         },
         {
@@ -239,12 +239,12 @@
           "was_retrieved": false,
           "chunks_found": 5,
           "passed": true,
-          "store_duration_ms": 399.03,
-          "retrieve_duration_ms": 14.88,
+          "store_duration_ms": 424.22,
+          "retrieve_duration_ms": 13.54,
           "retrieved_texts": [
             "My cat's name is Winston and he is 3 years old...",
-            "What is my cats name?...",
-            "Tell me about my pets and my family..."
+            "I have two new cats that I referenced....",
+            "What is my cats name?..."
           ]
         },
         {
@@ -254,12 +254,13 @@
           "query": "Who is Erin?",
           "expected_retrieval": true,
           "was_retrieved": true,
-          "chunks_found": 1,
+          "chunks_found": 2,
           "passed": true,
-          "store_duration_ms": 466.87,
-          "retrieve_duration_ms": 11.65,
+          "store_duration_ms": 502.0,
+          "retrieve_duration_ms": 34.72,
           "retrieved_texts": [
-            "My wife's name is Erin..."
+            "My wife's name is Erin...",
+            "My wife's name is Erin. Remember that...."
           ]
         }
       ]
@@ -287,9 +288,9 @@
           "retrieved_texts": [
             "Winston is my cat's name...",
             "My cat's name is Winston...",
-            "My wife's name is Erin...",
             "My cat's name is Winston and he is 3 years old...",
-            "No, that's actually you, dude. That's you. You don't know my cat's name. Say my ..."
+            "My first cat's name was Winston and he is a Cornish Rex....",
+            "When that response gets reviewed by my AI coding agent that's reviewing this thi..."
           ]
         },
         {
@@ -370,7 +371,7 @@
           ],
           "in_range": true,
           "passed": true,
-          "duration_ms": 31.24
+          "duration_ms": 36.37
         },
         {
           "test_number": 2,
@@ -387,7 +388,7 @@
           ],
           "in_range": true,
           "passed": true,
-          "duration_ms": 30.35
+          "duration_ms": 29.42
         },
         {
           "test_number": 3,
@@ -404,7 +405,7 @@
           ],
           "in_range": false,
           "passed": false,
-          "duration_ms": 29.85
+          "duration_ms": 29.44
         },
         {
           "test_number": 4,
@@ -422,7 +423,7 @@
           ],
           "in_range": true,
           "passed": true,
-          "duration_ms": 29.99
+          "duration_ms": 29.84
         },
         {
           "test_number": 5,
@@ -440,7 +441,7 @@
           ],
           "in_range": true,
           "passed": true,
-          "duration_ms": 29.75
+          "duration_ms": 29.52
         },
         {
           "test_number": 6,
