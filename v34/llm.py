@@ -627,14 +627,23 @@ def build_ephemeral_system_prompt(retrieved_memories, visual_mode: bool = False)
 
     memory_section = ""
     if retrieved_memories:
+        # Sort by importance (descending) so most important memories come first
+        sorted_memories = sorted(retrieved_memories, key=lambda c: c.get('importance', 0), reverse=True)
+        
         memory_bullets = []
         # Visual turns: include exactly 1 memory; otherwise include up to 3
         max_memories = 1 if visual_mode else 3
-        for chunk in retrieved_memories[:max_memories]:
+        for chunk in sorted_memories[:max_memories]:
             if chunk.get("timestamp"):
-                time_ago = utils.time_ago(chunk["timestamp"])  # e.g., "2h ago"
+                # Enhanced format with metadata
+                topic = chunk.get('topic', 'misc').replace('_', ' ').title()
+                importance = chunk.get('importance', 0)
+                time_ago = utils.time_ago(chunk["timestamp"])
                 text = chunk.get("text", chunk.get("content", ""))
-                memory_bullets.append(f"• ({time_ago}) {text}")
+                role = chunk.get('role', 'user').title()
+                
+                # Format: [Topic, Importance: N] Role (time ago) - text
+                memory_bullets.append(f"• [{topic}, Importance: {importance}] {role} ({time_ago}) - {text}")
         if memory_bullets:
             memory_section = "\nRelevant memories for this turn:\n" + "\n".join(memory_bullets)
 
@@ -753,14 +762,23 @@ def build_ephemeral_system_tail(retrieved_memories, session_recap: str = "", vis
             except Exception:
                 vision_line = None
 
+        # Sort by importance (descending)
+        sorted_memories = sorted(retrieved_memories, key=lambda c: c.get('importance', 0), reverse=True)
+        
         memory_bullets = []
         # Visual turns: include exactly 1 memory; otherwise include up to 3
         max_memories = 1 if visual_mode else 3
-        for chunk in retrieved_memories[:max_memories]:
+        for chunk in sorted_memories[:max_memories]:
             if chunk.get("timestamp"):
-                time_ago = utils.time_ago(chunk["timestamp"])  # e.g., "2h ago"
+                # Enhanced format with metadata
+                topic = chunk.get('topic', 'misc').replace('_', ' ').title()
+                importance = chunk.get('importance', 0)
+                time_ago = utils.time_ago(chunk["timestamp"])
                 text = chunk.get("text", chunk.get("content", ""))
-                memory_bullets.append(f"• ({time_ago}) {text}")
+                role = chunk.get('role', 'user').title()
+                
+                # Format: [Topic, Importance: N] Role (time ago) - text
+                memory_bullets.append(f"• [{topic}, Importance: {importance}] {role} ({time_ago}) - {text}")
         if memory_bullets:
             memory_section = "\nMemories:\n" + "\n".join(memory_bullets[:5])
 
