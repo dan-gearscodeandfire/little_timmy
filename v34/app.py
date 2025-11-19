@@ -194,7 +194,7 @@ def process_user_message(user_input: str):
     full_megaprompt_for_estimate = llm.build_megaprompt(history_without_current, user_input, relevant_chunks)
 
     # Path A: Always send full megaprompt each turn (revert to classic megaprompt strategy)
-    if getattr(config, "USE_FULL_MEGA_PROMPT", False):
+    if getattr(config, "USE_FULL_MEGA_PROMPT", True):  # Fixed: default should be True to match config
         prompt_to_send = full_megaprompt_for_estimate
         tail_mode_enabled = False
     else:
@@ -242,7 +242,7 @@ def process_user_message(user_input: str):
     temperature = 0.1 if llm.is_visual_question(user_input) else 0.4
     ai_response_text, new_ctx, stats = llm.generate_api_call(prompt_to_send, context=prev_ctx, raw=True, temperature=temperature)
     # Only mark tail mode for the baseline/tail strategy
-    if not getattr(config, "USE_FULL_MEGA_PROMPT", False):
+    if not getattr(config, "USE_FULL_MEGA_PROMPT", True):  # Fixed: default should be True
         SESSION_TAIL_MODE[SESSION_ID] = True
     # Preserve returned context for next turn KV reuse
     if new_ctx is not None:

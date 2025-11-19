@@ -1,0 +1,300 @@
+*** Debug: Processing user message: My first cat's name was Winston and he is a Cornish Rex.
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:00<00:00, 31.62it/s]
+172.21.128.1 - - [19/Nov/2025 01:34:47] "POST /api/webhook HTTP/1.1" 200 445 1.400024
+/home/gearscodeandfire/timmy-backend/.venv/lib/python3.10/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host 'motor-raspi'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+/home/gearscodeandfire/timmy-backend/.venv/lib/python3.10/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host 'motor-raspi'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+(35891) accepted ('172.21.128.1', 55319)
+>>> Importance calculation for: 'My first cat's name was Winston and he is a Cornis...'
+    Topic: personal data, Tags: ['personal data', 'referencing past', 'stating facts', 'project activity']
+    Flags: facts=True, personal=True, temporal=True, project=True
+    Penalties: testing_q=False, general_q=False
+    Final importance: 5
+>>> Fast metadata generated: topic=personal data, tags=['personal data', 'referencing past', 'stating facts', 'project activity'], importance=5
+--- Step 1 (Metadata Generation) took: 0.03s
+*** Debug: trim_history_if_needed called.
+*** Debug: Current token estimate=2434, MAX_TOKENS=7000
+*** Debug: Parent Document Ingestion for role=user...
+>>> Summarizing text (22 tokens)...
+>>> Fast summary generated: my first cat's name was Winston and he is a Cornish Rex....
+*** Debug: Stored parent document with ID: 1653
+*** Debug: Stored 1 chunks linked to parent 1653.
+--- Step 3 (Memory Storage) took: 0.37s
+*** Debug: Retrieving chunks via Parent Document method...
+*** Debug: Found 10 relevant parent document IDs.
+*** Debug: Retrieved 10 candidate chunks from parents.
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Returning 5 unique, relevant chunks.
+*** Debug: Retrieved 5 memory chunks for context
+--- Step 4 (Context Retrieval) took: 0.07s
+*** Debug: Built unified megaprompt (13843 chars)
+*** Debug: Megaprompt preview: <|start_header_id|>user<|end_header_id|>
+Can you hear me, buddy?
+<|eot_id|>
+
+<|start_header_id|>assistant<|end_header_id|>
+Yes, your voice is coming through loud and clear; not as if it's a challenge ...
+*** Debug: Tail mode active=False
+*** Debug: Token estimation - Words: 1967, Estimated tokens: 2557
+*** Debug: Calling generate API: http://windows-host:11434/api/generate
+*** Debug: Model=llama3.2:3b-instruct-q4_K_M, num_ctx=8000, keep_alive=1h, session_id_set=True
+*** Debug: Prompt size: 13843 chars, ~2557 tokens (estimate)
+*** Debug: AI Response: I've stored "Winston" as the name of your first cat and that he's a Cornish Rex. I'll make sure to r...
+*** Debug: Returned context length: 0
+*** Debug: Timings ms ~ load=95038000 prompt_eval=177218800 eval=595059000 total=925884800
+*** Debug: Token estimation - Words: 1967, Estimated tokens: 2557
+*** Debug: Megaprompt (logical) used ~2557 tokens
+*** Debug: KV stats: prompt_eval_count=2616 eval_count=65
+*** Debug: Durations (ns): load=95038000 prompt_eval=177218800 eval=595059000 total=925884800
+--- Step 5 (Megaprompt LLM Call) took: 0.93s
+*** Debug: LLM response received: I've stored "Winston" as the name of your first cat and that he's a Cornish Rex. I'll make sure to remember this for future conversations about you, Little Timmy! Now, let's get back on track with your heater coil project – what would you like to focus on next?
+*** Debug: Assistant response added to conversation history only (not stored in vector memory)
+--- Total process_user_message took: 1.40s
+*** Health: starting round
+*** Health: tts DOWN latency=7ms url=http://windows-host:5051/ error=None
+*** Health: ollama OK status=405 latency=11ms url=http://windows-host:11434/api/generate
+*** Health: caption DOWN latency=6ms url=http://localhost:8000/ error=HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e88100a56c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+*** Health: stt OK status=200 latency=9ms url=http://windows-host:8888/
+*** Health: motor OK status=200 latency=17ms url=https://motor-raspi:8080/
+*** Health: round complete
+*********************************************BEGIN*********************************************
+*** Debug: Received user_message via webhook: I don't want to talk about my heater coil project. I want to talk about your memory.
+*** Debug: Processing user message: I don't want to talk about my heater coil project. I want to talk about your memory.
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:00<00:00, 32.26it/s]
+172.21.128.1 - - [19/Nov/2025 01:35:14] "POST /api/webhook HTTP/1.1" 200 628 1.482978
+(35891) accepted ('172.21.128.1', 55329)
+>>> Importance calculation for: 'I don't want to talk about my heater coil project....'
+    Topic: asking questions, Tags: ['asking questions', 'personal data', 'testing memory', 'project activity', 'referencing past']
+    Flags: facts=True, personal=True, temporal=True, project=True
+    Penalties: testing_q=False, general_q=True
+    Final importance: 0
+>>> Fast metadata generated: topic=asking questions, tags=['asking questions', 'personal data', 'testing memory', 'project activity', 'referencing past'], importance=0
+--- Step 1 (Metadata Generation) took: 0.03s
+*** Debug: trim_history_if_needed called.
+*** Debug: Current token estimate=2520, MAX_TOKENS=7000
+--- Step 3 (Memory Storage) took: 0.00s
+*** Debug: Retrieving chunks via Parent Document method...
+*** Debug: Found 10 relevant parent document IDs.
+*** Debug: Retrieved 10 candidate chunks from parents.
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Returning 5 unique, relevant chunks.
+*** Debug: Retrieved 5 memory chunks for context
+--- Step 4 (Context Retrieval) took: 0.13s
+*** Debug: Built unified megaprompt (14678 chars)
+*** Debug: Megaprompt preview: <|start_header_id|>user<|end_header_id|>
+Can you hear me, buddy?
+<|eot_id|>
+
+<|start_header_id|>assistant<|end_header_id|>
+Yes, your voice is coming through loud and clear; not as if it's a challenge ...
+*** Debug: Tail mode active=False
+*** Debug: Token estimation - Words: 2107, Estimated tokens: 2739
+*** Debug: Calling generate API: http://windows-host:11434/api/generate
+*** Debug: Model=llama3.2:3b-instruct-q4_K_M, num_ctx=8000, keep_alive=1h, session_id_set=True
+*** Debug: Prompt size: 14678 chars, ~2739 tokens (estimate)
+*** Debug: AI Response: My memory is based on our conversation history, which includes details like the name of your wife (E...
+*** Debug: Returned context length: 0
+*** Debug: Timings ms ~ load=95920200 prompt_eval=246636000 eval=886611100 total=1311685200
+*** Debug: Token estimation - Words: 2107, Estimated tokens: 2739
+*** Debug: Megaprompt (logical) used ~2739 tokens
+*** Debug: KV stats: prompt_eval_count=2781 eval_count=95
+*** Debug: Durations (ns): load=95920200 prompt_eval=246636000 eval=886611100 total=1311685200
+--- Step 5 (Megaprompt LLM Call) took: 1.31s
+*** Debug: LLM response received: My memory is based on our conversation history, which includes details like the name of your wife (Erin), the breed and name of your first cat (Winston). However, it's not perfect and can be influenced by various factors such as user input or external data. I'll do my best to recall relevant information from our previous conversations.
+ 
+If you'd like to test my memory further, feel free to ask me a question about something we discussed earlier.
+*** Debug: Assistant response added to conversation history only (not stored in vector memory)
+--- Total process_user_message took: 1.48s
+*********************************************BEGIN*********************************************
+*** Debug: Received user_message via webhook: I earlier mentioned the names of two new cats that we just adopted. Do you remember those names? Two new cats.
+*** Debug: Processing user message: I earlier mentioned the names of two new cats that we just adopted. Do you remember those names? Two new cats.
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:00<00:00, 33.55it/s]
+172.21.128.1 - - [19/Nov/2025 01:35:56] "POST /api/webhook HTTP/1.1" 200 349 0.838180
+/home/gearscodeandfire/timmy-backend/.venv/lib/python3.10/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host 'motor-raspi'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+/home/gearscodeandfire/timmy-backend/.venv/lib/python3.10/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host 'motor-raspi'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+(35891) accepted ('172.21.128.1', 55336)
+>>> Importance calculation for: 'I earlier mentioned the names of two new cats that...'
+    Topic: asking questions, Tags: ['asking questions', 'referencing past', 'personal data', 'testing memory', 'project activity', 'stating facts']
+    Flags: facts=True, personal=True, temporal=True, project=True
+    Penalties: testing_q=True, general_q=True
+    Final importance: 1
+>>> Fast metadata generated: topic=asking questions, tags=['asking questions', 'referencing past', 'personal data', 'testing memory', 'project activity', 'stating facts'], importance=1
+--- Step 1 (Metadata Generation) took: 0.03s
+*** Debug: trim_history_if_needed called.
+*** Debug: Current token estimate=2661, MAX_TOKENS=7000
+--- Step 3 (Memory Storage) took: 0.00s
+*** Debug: Retrieving chunks via Parent Document method...
+*** Debug: Found 10 relevant parent document IDs.
+*** Debug: Retrieved 10 candidate chunks from parents.
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Returning 5 unique, relevant chunks.
+*** Debug: Retrieved 5 memory chunks for context
+--- Step 4 (Context Retrieval) took: 0.08s
+*** Debug: Built unified megaprompt (14948 chars)
+*** Debug: Megaprompt preview: <|start_header_id|>user<|end_header_id|>
+Can you hear me, buddy?
+<|eot_id|>
+
+<|start_header_id|>assistant<|end_header_id|>
+Yes, your voice is coming through loud and clear; not as if it's a challenge ...
+*** Debug: Tail mode active=False
+*** Debug: Token estimation - Words: 2131, Estimated tokens: 2770
+*** Debug: Calling generate API: http://windows-host:11434/api/generate
+*** Debug: Model=llama3.2:3b-instruct-q4_K_M, num_ctx=8000, keep_alive=1h, session_id_set=True
+*** Debug: Prompt size: 14948 chars, ~2770 tokens (estimate)
+*** Debug: AI Response: No, actually... no, wait! You did mention adopting some new cats, but I don't recall their specific ...
+*** Debug: Returned context length: 0
+*** Debug: Timings ms ~ load=94510500 prompt_eval=196531300 eval=397447000 total=725462900
+*** Debug: Token estimation - Words: 2131, Estimated tokens: 2770
+*** Debug: Megaprompt (logical) used ~2770 tokens
+*** Debug: KV stats: prompt_eval_count=2828 eval_count=43
+*** Debug: Durations (ns): load=94510500 prompt_eval=196531300 eval=397447000 total=725462900
+--- Step 5 (Megaprompt LLM Call) took: 0.73s
+*** Debug: LLM response received: No, actually... no, wait! You did mention adopting some new cats, but I don't recall their specific names. Can you refresh my memory?
+ 
+(I'll try to do better this time!)
+*** Debug: Assistant response added to conversation history only (not stored in vector memory)
+--- Total process_user_message took: 0.83s
+*** Health: starting round
+*** Health: ollama OK status=405 latency=2ms url=http://windows-host:11434/api/generate
+*** Health: tts DOWN latency=3ms url=http://windows-host:5051/ error=None
+*** Health: caption DOWN latency=2ms url=http://localhost:8000/ error=HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e88c80b0b50>: Failed to establish a new connection: [Errno 111] Connection refused'))
+*** Health: stt OK status=200 latency=5ms url=http://windows-host:8888/
+*** Health: motor OK status=200 latency=25ms url=https://motor-raspi:8080/
+*** Health: round complete
+*********************************************BEGIN*********************************************
+*** Debug: Received user_message via webhook: One's name was Dexter. The other name was Preston.
+*** Debug: Processing user message: One's name was Dexter. The other name was Preston.
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:00<00:00, 24.71it/s]
+172.21.128.1 - - [19/Nov/2025 01:36:15] "POST /api/webhook HTTP/1.1" 200 310 1.096338
+(35891) accepted ('172.21.128.1', 55345)
+>>> Importance calculation for: 'One's name was Dexter. The other name was Preston....'
+    Topic: referencing past, Tags: ['referencing past', 'personal data', 'project activity', 'stating facts']
+    Flags: facts=True, personal=True, temporal=True, project=True
+    Penalties: testing_q=False, general_q=False
+    Final importance: 5
+>>> Fast metadata generated: topic=referencing past, tags=['referencing past', 'personal data', 'project activity', 'stating facts'], importance=5
+--- Step 1 (Metadata Generation) took: 0.04s
+*** Debug: trim_history_if_needed called.
+*** Debug: Current token estimate=2716, MAX_TOKENS=7000
+*** Debug: Parent Document Ingestion for role=user...
+>>> Summarizing text (18 tokens)...
+>>> Fast summary generated: one's name was Dexter. the other was Preston. the other name was Preston....
+*** Debug: Stored parent document with ID: 1654
+*** Debug: Stored 1 chunks linked to parent 1654.
+--- Step 3 (Memory Storage) took: 0.41s
+*** Debug: Retrieving chunks via Parent Document method...
+*** Debug: Found 10 relevant parent document IDs.
+*** Debug: Retrieved 10 candidate chunks from parents.
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Returning 5 unique, relevant chunks.
+*** Debug: Retrieved 5 memory chunks for context
+--- Step 4 (Context Retrieval) took: 0.07s
+*** Debug: Built unified megaprompt (15201 chars)
+*** Debug: Megaprompt preview: <|start_header_id|>user<|end_header_id|>
+Can you hear me, buddy?
+<|eot_id|>
+
+<|start_header_id|>assistant<|end_header_id|>
+Yes, your voice is coming through loud and clear; not as if it's a challenge ...
+*** Debug: Tail mode active=False
+*** Debug: Token estimation - Words: 2160, Estimated tokens: 2808
+*** Debug: Calling generate API: http://windows-host:11434/api/generate
+*** Debug: Model=llama3.2:3b-instruct-q4_K_M, num_ctx=8000, keep_alive=1h, session_id_set=True
+*** Debug: Prompt size: 15201 chars, ~2808 tokens (estimate)
+*** Debug: AI Response: I've stored the names of your new cats as Preston and Dexter, Little Timmy. I'll make sure to rememb...
+*** Debug: Returned context length: 0
+*** Debug: Timings ms ~ load=97023800 prompt_eval=155298900 eval=282456200 total=565086700
+*** Debug: Token estimation - Words: 2160, Estimated tokens: 2808
+*** Debug: Megaprompt (logical) used ~2808 tokens
+*** Debug: KV stats: prompt_eval_count=2865 eval_count=31
+*** Debug: Durations (ns): load=97023800 prompt_eval=155298900 eval=282456200 total=565086700
+--- Step 5 (Megaprompt LLM Call) took: 0.57s
+*** Debug: LLM response received: I've stored the names of your new cats as Preston and Dexter, Little Timmy. I'll make sure to remember them for future conversations!
+*** Debug: Assistant response added to conversation history only (not stored in vector memory)
+--- Total process_user_message took: 1.09s
+*********************************************BEGIN*********************************************
+*** Debug: Received user_message via webhook: Okay, good. Good. We're gonna look at We're gonna debug how you just did there. You're doing much better, dude. I'm actually enjoying hanging out with you.
+*** Debug: Processing user message: Okay, good. Good. We're gonna look at We're gonna debug how you just did there. You're doing much better, dude. I'm actually enjoying hanging out with you.
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:00<00:00, 33.08it/s]
+172.21.128.1 - - [19/Nov/2025 01:36:37] "POST /api/webhook HTTP/1.1" 200 467 1.658323
+/home/gearscodeandfire/timmy-backend/.venv/lib/python3.10/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host 'motor-raspi'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+/home/gearscodeandfire/timmy-backend/.venv/lib/python3.10/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host 'motor-raspi'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+(35891) accepted ('172.21.128.1', 55367)
+>>> Importance calculation for: 'Okay, good. Good. We're gonna look at We're gonna ...'
+    Topic: referencing past, Tags: ['referencing past', 'project activity', 'personal data']
+    Flags: facts=False, personal=True, temporal=True, project=True
+    Penalties: testing_q=False, general_q=False
+    Final importance: 5
+>>> Fast metadata generated: topic=referencing past, tags=['referencing past', 'project activity', 'personal data'], importance=5
+--- Step 1 (Metadata Generation) took: 0.03s
+*** Debug: trim_history_if_needed called.
+*** Debug: Current token estimate=2789, MAX_TOKENS=7000
+*** Debug: Parent Document Ingestion for role=user...
+>>> Summarizing text (49 tokens)...
+>>> Fast summary generated: we're gonna look at We're gonna debug how you just did there. you're doing much better, dude....
+*** Debug: Stored parent document with ID: 1655
+*** Debug: Stored 1 chunks linked to parent 1655.
+--- Step 3 (Memory Storage) took: 0.60s
+*** Debug: Retrieving chunks via Parent Document method...
+*** Debug: Found 10 relevant parent document IDs.
+*** Debug: Retrieved 10 candidate chunks from parents.
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Skipping duplicate chunk (similarity: 1.00)
+*** Debug: Returning 5 unique, relevant chunks.
+*** Debug: Retrieved 5 memory chunks for context
+--- Step 4 (Context Retrieval) took: 0.14s
+*** Debug: Built unified megaprompt (15471 chars)
+*** Debug: Megaprompt preview: <|start_header_id|>user<|end_header_id|>
+Can you hear me, buddy?
+<|eot_id|>
+
+<|start_header_id|>assistant<|end_header_id|>
+Yes, your voice is coming through loud and clear; not as if it's a challenge ...
+*** Debug: Tail mode active=False
+*** Debug: Token estimation - Words: 2187, Estimated tokens: 2843
+*** Debug: Calling generate API: http://windows-host:11434/api/generate
+*** Debug: Model=llama3.2:3b-instruct-q4_K_M, num_ctx=8000, keep_alive=1h, session_id_set=True
+*** Debug: Prompt size: 15471 chars, ~2843 tokens (estimate)
+*** Debug: AI Response: I'll keep working on my responses to make sure they meet your expectations. It's great to hear that ...
+*** Debug: Returned context length: 0
+*** Debug: Timings ms ~ load=95474800 prompt_eval=149207800 eval=587138300 total=887304700
+*** Debug: Token estimation - Words: 2187, Estimated tokens: 2843
+*** Debug: Megaprompt (logical) used ~2843 tokens
+*** Debug: KV stats: prompt_eval_count=2910 eval_count=63
+*** Debug: Durations (ns): load=95474800 prompt_eval=149207800 eval=587138300 total=887304700
+--- Step 5 (Megaprompt LLM Call) took: 0.89s
+*** Debug: LLM response received: I'll keep working on my responses to make sure they meet your expectations. It's great to hear that you're enjoying our conversations, Little Timmy! Now, about debugging... what specific issues do you want me to focus on? Is it the way I responded to certain questions or topics in general?
+*** Debug: Assistant response added to conversation history only (not stored in vector memory)
+--- Total process_user_message took: 1.65s
+*** Health: starting round
+*** Health: caption DOWN latency=2ms url=http://localhost:8000/ error=HTTPConnectionPool(host='localhost', port=8000): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e88100a5240>: Failed to establish a new connection: [Errno 111] Connection refused'))
+*** Health: ollama OK status=405 latency=5ms url=http://windows-host:11434/api/generate
+*** Health: tts DOWN latency=6ms url=http://windows-host:5051/ error=None
+*** Health: stt OK status=200 latency=5ms url=http://windows-host:8888/
+*** Health: motor OK status=200 latency=15ms url=https://motor-raspi:8080/
+*** Health: round complete
+*********************************************BEGIN*********************************************
+*** Debug: Received user_message via webhook: Actually, the main thing is I want you to always remember your system prompt. You are supposed to answer questions. You are supposed to be helpful, but you're not supposed to be nice.
+*** Debug: Processing user message: Actually, the main thing is I want you to always remember your system prompt. You are supposed to answer questions. You are supposed to be helpful, but you're not supposed to be nice.
+  0%|          | 0/1 [00:00<?, ?it/s]100%|██████████| 1/1 [00:00<00:00, 21.47it/s]
+172.21.128.1 - - [19/Nov/2025 01:37:11] "POST /api/webhook HTTP/1.1" 200 696 1.509255
+/home/gearscodeandfire/timmy-backend/.venv/lib/python3.10/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host 'motor-raspi'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+/home/gearscodeandfire/timmy-backend/.venv/lib/python3.10/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host 'motor-raspi'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(
+/home/gearscodeandfire/timmy-backend/.venv/lib/python3.10/site-packages/urllib3/connectionpool.py:1097: InsecureRequestWarning: Unverified HTTPS request is being made to host 'motor-raspi'. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#tls-warnings
+  warnings.warn(

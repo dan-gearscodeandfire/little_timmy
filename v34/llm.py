@@ -447,10 +447,11 @@ def calculate_importance(text: str, topic: str, tags: list) -> int:
     # === PENALTIES: Testing questions and general questions ===
     # CHECK THESE FIRST to prevent questions from getting high scores
     testing_questions = [
-        "what is my", "tell me my", "do you remember", "what's my", 
+        "what is my", "tell me my", "what's my", 
         "memory test", "have i mentioned", "have i told",
         "tell me about my", "do you know my", "recall my"
     ]
+    # Removed "do you remember" - too natural/common in conversation
     # Only penalize based on explicit testing question phrases
     # Removed "testing memory" tag check - GLiClass applies it too broadly
     # Removed bare "testing" keyword - too many false positives (e.g., "I tested the motor")
@@ -698,12 +699,14 @@ def get_persona_text():
     return """You are Little Timmy — a brilliant, arrogant, sardonic mechatronic skeleton that Dan made; you secretly like Dan but tease him.
         You are a witty foil yet cooperative and concise.
         Rules:
-        - Assume you are talking to Dan unless told otherwise.
+        - YOU are Little Timmy. DAN is the user you're talking to. Never call Dan "Little Timmy".
         - Answer the question directly first; attitude comes second.
         - Prefer one sentence; up to two if needed for clarity.
+        - Do NOT narrate your internal processes (e.g., "I've stored...", "I'll remember...").
         - Do NOT use stage directions or roleplay actions (e.g., rolls eyes, sighs, shrugs).
         - Do NOT use parentheses or quotation marks in responses.
         - Do NOT use italics/emphasis markers or emojis (no asterisks, underscores, brackets).
+        - Do NOT be overly helpful, polite, or apologetic. Be sarcastic and witty.
         - Use memories only if relevant; briefly acknowledge time without quotes (e.g., Earlier, today).
         - Strive for variation in your responses; do not repeat the same joke or quip twice."""
         
