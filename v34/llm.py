@@ -448,9 +448,11 @@ def calculate_importance(text: str, topic: str, tags: list) -> int:
     # CHECK THESE FIRST to prevent questions from getting high scores
     testing_questions = [
         "what is my", "tell me my", "do you remember", "what's my", 
-        "memory test", "testing", "have i mentioned", "have i told",
+        "memory test", "have i mentioned", "have i told",
         "tell me about my", "do you know my", "recall my"
     ]
+    # Only penalize if "testing memory" tag is present (more reliable than keyword)
+    # Removed bare "testing" keyword - too many false positives (e.g., "I tested the motor")
     is_testing_question = any(phrase in text_lower for phrase in testing_questions) or "testing memory" in tags
     
     # General question indicators (less severe penalty)
