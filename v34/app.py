@@ -158,11 +158,28 @@ def process_user_message(user_input: str):
             utils.debug_print(f"*** Debug: Retrieved {len(relevant_chunks)} memory chunks for context")
         except Exception:
             pass
-        context_strings = [
-            f"{chunk['role'].title()} ({utils.time_ago(chunk['timestamp'])}) "
-            f"- {chunk['text']}"
-            for chunk in relevant_chunks if chunk.get("timestamp")
-        ]
+        # Sort chunks by importance (descending) so most important context comes first
+        sorted_chunks = sorted(relevant_chunks, key=lambda c: c.get('importance', 0), reverse=True)
+        
+        # Format with metadata for better LLM understanding
+        context_strings = []
+        for chunk in sorted_chunks:
+            if not chunk.get("timestamp"):
+                continue
+            
+            # Build metadata prefix
+            topic = chunk.get('topic', 'misc').replace('_', ' ').title()
+            importance = chunk.get('importance', 0)
+            
+            # Format: [Topic, Importance: N] Role (time ago) - text
+            metadata_prefix = f"[{topic}, Importance: {importance}]"
+            time_str = utils.time_ago(chunk['timestamp'])
+            role_str = chunk['role'].title()
+            
+            context_strings.append(
+                f"{metadata_prefix} {role_str} ({time_str}) - {chunk['text']}"
+            )
+        
         context_text = "\n".join(context_strings)
     else:
         utils.debug_print("*** Debug: Retrieval disabled by config.RETRIEVAL_ENABLED=False (KV/session-only mode)")

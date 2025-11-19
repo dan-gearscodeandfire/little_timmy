@@ -220,7 +220,7 @@ def retrieve_similar_chunks_from_parents(query_embedding, parent_ids, k=config.N
                          -- Semantic component (lower distance = better)
                          (embedding <-> %s::vector) * 0.7 
                          -- Keyword component (higher rank = better, so subtract from penalty)
-                         - (ts_rank(to_tsvector('english', content), plainto_tsquery('english', %s)) * 2.0)
+                         - (ts_rank(to_tsvector('english', content), plainto_tsquery('english', %s)) * 1.5)
                          -- Tag-based scoring (boost facts, penalize questions)
                          + CASE 
                              WHEN 'stating facts' = ANY(tags) OR 'factual statement' = ANY(tags) THEN -0.4

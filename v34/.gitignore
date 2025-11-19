@@ -4,6 +4,8 @@ app_debug.log
 server.log
 debug.txt
 *chat_debug*
+app_session.log
+app.pid
 
 # Payloads and Test Data
 payloads.txt
