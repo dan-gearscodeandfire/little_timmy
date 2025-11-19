@@ -54,6 +54,6 @@ DB_CONFIG = {
 # --- Memory and Retrieval Tuning ---
 MAX_CHUNK_SIZE = 512
 OVERLAP_SENTENCES = 1
-RECENCY_WEIGHT = 0.25
+RECENCY_WEIGHT = 0.75  # Weight for recent memories (higher = stronger recency bias)
 NUM_RETRIEVED_CHUNKS = 5
 

@@ -205,9 +205,21 @@ def fast_generate_metadata(text: str) -> dict:
         scores = pipe(text, labels=LABELS)
         inner_scores = scores[0]  # unpack single-sentence result
         
-        # Extract topic (top label) and tags (labels with score >= 0.50)
-        topic = inner_scores[0]["label"]
-        tags = [d["label"] for d in inner_scores if d["score"] >= 0.70]  # Raised to 0.70 for more selectivity
+        # Sort by score descending to get the highest-scoring label as topic
+        sorted_scores = sorted(inner_scores, key=lambda x: x["score"], reverse=True)
+        
+        # Extract topic (highest scoring label)
+        topic = sorted_scores[0]["label"]
+        
+        # Extract tags (labels with score >= 0.60), but exclude "asking questions" if it's not the top topic
+        # This prevents question-penalty from being applied to statements
+        tags = []
+        for d in sorted_scores:
+            if d["score"] >= 0.60:
+                # Skip "asking questions" tag if it's not the primary topic
+                if d["label"] == "asking questions" and topic != "asking questions":
+                    continue
+                tags.append(d["label"])
         
         # Map topic and context to importance score
         importance = calculate_importance(text, topic, tags)

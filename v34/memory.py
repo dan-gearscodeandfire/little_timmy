@@ -235,7 +235,7 @@ def retrieve_similar_chunks_from_parents(query_embedding, parent_ids, k=config.N
                 FROM memory_chunks
                 WHERE parent_id = ANY(%s)
                   AND (
-                    (embedding <-> %s::vector) < 1.5  -- Semantic threshold
+                    (embedding <-> %s::vector) < 1.0  -- Semantic threshold (tightened from 1.5 for better precision)
                     OR 
                     ts_rank(to_tsvector('english', content), plainto_tsquery('english', %s)) > 0  -- Has keyword match
                   )
