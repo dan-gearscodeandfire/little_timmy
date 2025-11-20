@@ -16,6 +16,13 @@ test_phrases = [
     ("I like that", True),
     ("Perfect response", True),
     ("Tell me more", False),
+    ("That ruled", True),
+    ("That was awesome", True),
+    ("Wow Timmy", True),
+    ("Amazing response", True),
+    ("Awesome!", True),
+    ("Love it", True),
+    ("That's not right", False),
 ]
 
 print("\n📝 PRAISE DETECTION TESTS:")

@@ -11,9 +11,13 @@ PRAISE_PHRASES = [
     "good one, timmy",
     "great response",
     "excellent response",
+    "amazing response",
     "that was great",
     "that was excellent",
     "that was amazing",
+    "that was awesome",
+    "that ruled",
+    "that's awesome",
     "perfect response",
     "nice one",
     "well done",
@@ -22,6 +26,11 @@ PRAISE_PHRASES = [
     "that's great",
     "i like that",
     "that's perfect",
+    "wow timmy",
+    "nice timmy",
+    "good timmy",
+    "love that",
+    "love it",
 ]
 
 def is_praise(user_message: str) -> bool:
@@ -34,9 +43,20 @@ def is_praise(user_message: str) -> bool:
             return True
     
     # Check for short affirmative responses that are likely praise
-    short_praise = ["good", "nice", "perfect", "excellent", "great", "amazing"]
+    short_praise = ["good", "nice", "perfect", "excellent", "great", "amazing", "awesome", "wow", "love", "ruled"]
     words = msg_lower.split()
     if len(words) <= 3 and any(word in short_praise for word in words):
+        return True
+    
+    # Check for enthusiastic responses with exclamation marks
+    if "!" in user_message and len(words) <= 5:
+        # Remove punctuation for checking
+        words_clean = [w.strip('!.,?') for w in words]
+        if any(word in short_praise for word in words_clean):
+            return True
+    
+    # Check for "that [positive word]" pattern
+    if msg_lower.startswith("that ") and any(word in msg_lower for word in ["ruled", "awesome", "great", "amazing", "perfect"]):
         return True
     
     return False
