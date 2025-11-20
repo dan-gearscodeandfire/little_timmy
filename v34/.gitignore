@@ -13,6 +13,9 @@ payloads_v*.txt
 payload_*.txt
 v*payloads*.txt
 
+# Fine-tuning Data (optional - uncomment to exclude from git)
+# fine_tuning_best_case_interchanges.md
+
 # Personal Notes
 notes
 

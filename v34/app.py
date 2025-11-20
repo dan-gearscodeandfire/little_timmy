@@ -22,6 +22,7 @@ import utils
 import llm
 import memory
 import vision_state
+import fine_tuning_capture
 
 # --- Flask and SocketIO Setup ---
 app = Flask(__name__)
@@ -132,12 +133,28 @@ def process_user_message(user_input: str):
     start_time = time.time()
     utils.debug_print(f"*** Debug: Processing user message: {user_input}")
 
-    # 1. Metadata generation
+    # 1. Check if this is praise for the previous response (fine-tuning capture)
+    if fine_tuning_capture.is_praise(user_input) and len(utils.conversation_history) >= 2:
+        try:
+            context = fine_tuning_capture.get_conversation_context(utils.conversation_history)
+            if context and context["user_n3"] and context["assistant_n1"]:
+                # Capture the excellent example (system prompt will be added during next generation)
+                utils.debug_print(f"*** Fine-tuning: Praise detected, will capture previous exchange")
+                # Store context for capture after we build the prompt
+                SESSION_CONTEXTS["_pending_ft_capture"] = {
+                    "user_n3": context["user_n3"],
+                    "assistant_n1": context["assistant_n1"],
+                    "praise_n0": user_input
+                }
+        except Exception as e:
+            utils.debug_print(f"*** Fine-tuning capture error: {e}")
+    
+    # 2. Metadata generation
     t1 = time.time()
     should_embed_user, user_metadata = is_important_user_message(user_input)
     utils.debug_print(f"--- Step 1 (Metadata Generation) took: {time.time() - t1:.2f}s")
     
-    # 2. Add user message to conversation history
+    # 3. Add user message to conversation history
     utils.conversation_history.append({"role": "user", "content": user_input})
     utils.trim_history_if_needed()
     
@@ -229,6 +246,24 @@ def process_user_message(user_input: str):
         f.write(f"=== Megaprompt at {time.strftime('%Y-%m-%d %H:%M:%S')} ===\n")
         f.write(prompt_to_send)
         f.write("\n\n")
+    
+    # If we have a pending fine-tuning capture, save it now (we have the system prompt)
+    if "_pending_ft_capture" in SESSION_CONTEXTS:
+        try:
+            ft_data = SESSION_CONTEXTS.pop("_pending_ft_capture")
+            fine_tuning_capture.capture_fine_tuning_example(
+                user_message_n3=ft_data["user_n3"],
+                system_prompt_n2=prompt_to_send,  # Current prompt (has memories from previous turn)
+                assistant_response_n1=ft_data["assistant_n1"],
+                praise_message_n0=ft_data["praise_n0"],
+                metadata={
+                    "session_id": SESSION_ID,
+                    "timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+                }
+            )
+            utils.debug_print(f"*** Fine-tuning: Captured excellent example to fine_tuning_best_case_interchanges.md")
+        except Exception as e:
+            utils.debug_print(f"*** Fine-tuning capture save error: {e}")
     
     # Call generate endpoint; USE returned context to preserve conversation across turns
     utils.debug_print(f"*** Debug: Tail mode active={tail_mode_enabled}")
