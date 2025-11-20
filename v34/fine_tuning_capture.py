@@ -103,9 +103,7 @@ def capture_fine_tuning_example(
         
         f.write("### System Prompt with Memories (n-2):\n")
         f.write("```\n")
-        f.write(system_prompt_n2[:1000])  # Truncate if very long
-        if len(system_prompt_n2) > 1000:
-            f.write(f"\n... [truncated, full length: {len(system_prompt_n2)} chars]")
+        f.write(system_prompt_n2)  # Include FULL prompt - memories are critical for fine-tuning
         f.write("\n```\n\n")
         
         f.write("### Assistant Response (n-1):\n")
