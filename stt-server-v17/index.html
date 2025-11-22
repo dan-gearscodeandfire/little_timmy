@@ -1,0 +1,160 @@
+#v14
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TimmyTTS Live Transcription</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        .transcript-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .transcript-box {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .transcript-box.full-width {
+            width: 100%;
+        }
+        .transcript-box h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        #live-transcript {
+            min-height: 50px;
+            font-size: 1.2em;
+            margin: 0;
+        }
+        #staged-transcript {
+            min-height: 50px;
+            font-size: 1.1em;
+            margin: 0;
+            color: #666;
+        }
+        #final-transcript {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+        }
+        #final-transcript li {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin: 0;
+        }
+        #final-transcript li:last-child {
+            border-bottom: none;
+        }
+        .status {
+            font-style: italic;
+            color: #7f8c8d;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .debug-info {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>TimmyTTS Live Transcription</h1>
+        
+        <p class="status">Listening...</p>
+        
+        <div class="transcript-container">
+            <div class="transcript-box">
+                <h2>Live Transcript</h2>
+                <p id="live-transcript">Waiting for speech...</p>
+            </div>
+            <div class="transcript-box">
+                <h2>Staged for Finalization</h2>
+                <p id="staged-transcript"></p>
+            </div>
+            <div class="transcript-box full-width">
+                <h2>Previous Transcripts</h2>
+                <ul id="final-transcript"></ul>
+            </div>
+        </div>
+        
+        <div class="debug-info">
+            <p>Connection status: <span id="connection-status">Initializing</span></p>
+            <p>Last update: <span id="last-update">Never</span></p>
+        </div>
+    </div>
+    <script>
+        function updateTranscripts() {
+            fetch('/transcript')
+                .then(response => response.json())
+                .then(data => {
+                    const fullText = data.current;
+                    const liveTranscriptElem = document.getElementById('live-transcript');
+                    const stagedTranscriptElem = document.getElementById('staged-transcript');
+                    const connectionStatusElem = document.getElementById('connection-status');
+                    const lastUpdateElem = document.getElementById('last-update');
+
+                    // Update connection status
+                    connectionStatusElem.innerText = 'Connected';
+                    lastUpdateElem.innerText = new Date().toLocaleTimeString();
+
+                    if (!fullText) {
+                        liveTranscriptElem.innerText = 'Waiting for speech...';
+                        stagedTranscriptElem.innerText = '';
+                    } else {
+                        const lastSentenceBreak = fullText.lastIndexOf('.') > -1 ? fullText.lastIndexOf('.') : (fullText.lastIndexOf('?') > -1 ? fullText.lastIndexOf('?') : fullText.lastIndexOf('!'));
+                        if (lastSentenceBreak !== -1 && lastSentenceBreak < fullText.length - 1) {
+                            stagedTranscriptElem.innerText = fullText.substring(0, lastSentenceBreak + 1);
+                            liveTranscriptElem.innerText = fullText.substring(lastSentenceBreak + 1).trim();
+                        } else {
+                            stagedTranscriptElem.innerText = '';
+                            liveTranscriptElem.innerText = fullText;
+                        }
+                    }
+
+                    const finalTranscriptList = document.getElementById('final-transcript');
+                    if (finalTranscriptList.childElementCount !== data.final.length) {
+                        finalTranscriptList.innerHTML = '';
+                        data.final.slice().reverse().forEach(text => {
+                            const li = document.createElement('li');
+                            li.innerText = text;
+                            finalTranscriptList.appendChild(li);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching transcript:', error);
+                    document.getElementById('connection-status').innerText = 'Error';
+                });
+        }
+        setInterval(updateTranscripts, 500);
+        updateTranscripts();
+    </script>
+</body>
+</html> 
