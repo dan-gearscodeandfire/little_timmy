@@ -17,7 +17,7 @@ echo ================================================
 echo.
 
 REM Activate virtual environment
-call C:\Users\dsm27\whisper\WhisperLive\.venv\Scripts\activate.bat
+call C:\Users\dsm27\whisper\.venv\Scripts\activate.bat
 
 echo Starting STT Server in TTS mode (no LLM)...
 echo Press Ctrl+C to stop the server.

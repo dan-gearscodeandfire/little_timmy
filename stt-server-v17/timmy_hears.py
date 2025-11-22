@@ -93,13 +93,13 @@ def initialize_model(model_size=DEFAULT_STT_MODEL, gpu_device=0):
     
     # If gpu_device is -1, force CPU mode
     if gpu_device == -1:
-        print("🔄 Initializing model on CPU...")
+        print("[CPU] Initializing model on CPU...")
         model = WhisperModel(
             model_size, 
             device="cpu", 
             compute_type="int8"
         )
-        print(f"✅ faster-whisper model loaded on CPU: {model_size}")
+        print(f"[OK] faster-whisper model loaded on CPU: {model_size}")
         return
     
     try:
@@ -110,19 +110,19 @@ def initialize_model(model_size=DEFAULT_STT_MODEL, gpu_device=0):
             compute_type="float16", 
             device_index=gpu_device
         )
-        print(f"✅ faster-whisper model loaded on GPU: {model_size}")
+        print(f"[OK] faster-whisper model loaded on GPU: {model_size}")
     except Exception as e:
-        print(f"⚠️ GPU failed: {e}")
-        print("🔄 Falling back to CPU...")
+        print(f"[WARNING] GPU failed: {e}")
+        print("[CPU] Falling back to CPU...")
         try:
             model = WhisperModel(
                 model_size, 
                 device="cpu", 
                 compute_type="int8"
             )
-            print(f"✅ faster-whisper model loaded on CPU: {model_size}")
+            print(f"[OK] faster-whisper model loaded on CPU: {model_size}")
         except Exception as e2:
-            print(f"❌ Failed to load model on CPU: {e2}")
+            print(f"[ERROR] Failed to load model on CPU: {e2}")
             raise
 
 def transcribe_audio(socketio_app):
@@ -181,7 +181,7 @@ def transcribe_audio(socketio_app):
                 )
             except Exception as e:
                 if "cudnn" in str(e).lower() or "cuda" in str(e).lower():
-                    print(f"🔄 GPU transcription failed, reinitializing with CPU: {e}")
+                    print(f"[CPU] GPU transcription failed, reinitializing with CPU: {e}")
                     # Reinitialize model with CPU using the same model path
                     initialize_model(model_size=current_model_path or DEFAULT_STT_MODEL, gpu_device=-1)  # -1 forces CPU
                     # Retry transcription with CPU
@@ -225,10 +225,10 @@ def transcribe_audio(socketio_app):
 
                         # Send to either LLM or TTS based on --ai flag
                         if ai_mode:
-                            print(f"🤖 Sending to LLM: {latest_entry}")
+                            print(f"[AI] Sending to LLM: {latest_entry}")
                             send_to_llm_preprocessor(latest_entry)
                         else:
-                            print(f"🔊 Sending to TTS: {latest_entry}")
+                            print(f"[TTS] Sending to TTS: {latest_entry}")
                             send_to_tts_server(latest_entry)
 
                     
@@ -395,20 +395,20 @@ def send_to_llm_preprocessor(text):
         )
         response.raise_for_status()
         result = response.json()
-        print(f"✅ LLM Response: {result.get('response', 'No response')}")
+        print(f"[OK] LLM Response: {result.get('response', 'No response')}")
         return result
     except requests.exceptions.Timeout:
-        print("⏱️  LLM preprocessor timeout (taking too long)")
+        print("[TIMEOUT] LLM preprocessor timeout (taking too long)")
         return None
     except requests.exceptions.ConnectionError as e:
-        print(f"🔌 Cannot connect to preprocessor: {e}")
+        print(f"[CONNECTION ERROR] Cannot connect to preprocessor: {e}")
         print(f"   Make sure preprocessor is running: Check localhost:5000")
         return None
     except requests.exceptions.RequestException as e:
-        print(f"❌ Error sending to LLM preprocessor: {e}")
+        print(f"[ERROR] Error sending to LLM preprocessor: {e}")
         return None
     except json.JSONDecodeError as e:
-        print(f"❌ Error parsing LLM response: {e}")
+        print(f"[ERROR] Error parsing LLM response: {e}")
         return None
 
 def notify_eye(text: str):
@@ -450,9 +450,9 @@ if __name__ == "__main__":
     print("This may take a moment to initialize on GPU...")
     
     if ai_mode:
-        print(f"🤖 AI Mode: Transcripts will be sent to LLM endpoint: {LLM_ENDPOINT}")
+        print(f"[AI Mode] Transcripts will be sent to LLM endpoint: {LLM_ENDPOINT}")
     else:
-        print(f"🔊 TTS Mode: Transcripts will be sent to TTS server: {TTS_SERVER_URL}")
+        print(f"[TTS Mode] Transcripts will be sent to TTS server: {TTS_SERVER_URL}")
     
     # Start transcription in background
     threads = start_transcription_service(args.model, args.gpu_device)

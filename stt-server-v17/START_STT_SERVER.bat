@@ -18,16 +18,16 @@ echo ================================================
 echo.
 
 REM Check if virtual environment exists
-if not exist "C:\Users\dsm27\whisper\WhisperLive\.venv\Scripts\activate.bat" (
+if not exist "C:\Users\dsm27\whisper\.venv\Scripts\activate.bat" (
     echo Error: Virtual environment not found!
-    echo Expected: C:\Users\dsm27\whisper\WhisperLive\.venv
+    echo Expected: C:\Users\dsm27\whisper\.venv
     echo.
     pause
     exit /b 1
 )
 
 REM Activate virtual environment
-call C:\Users\dsm27\whisper\WhisperLive\.venv\Scripts\activate.bat
+call C:\Users\dsm27\whisper\.venv\Scripts\activate.bat
 
 echo Virtual environment activated
 echo.
