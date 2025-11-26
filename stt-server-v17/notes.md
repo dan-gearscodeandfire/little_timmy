@@ -43,7 +43,7 @@ Similarity Checking: Uses difflib.SequenceMatcher to compare new text with previ
 Quality Filtering: Ignores text fragments shorter than 3 characters
 Accumulation: Handles forced finalization by accumulating text fragments across multiple processing cycles
 6. TTS Payload Delivery (send_to_tts_server())
-Final Step: Once text is finalized, it's sent to the TTS server at http://192.168.1.139:5000
+Final Step: Once text is finalized, it's sent to the TTS server at http://192.168.1.154:5051
 HTTP Request: Makes a GET request with the text as a query parameter
 Coordination: The TTS server responds by playing audio and sending pause/resume signals back to control the listening state
 7. State Management
@@ -146,4 +146,4 @@ Currently using cdnn or something using pytorch, definitely using GPU, wicked fa
 Tiny custom model works great!!!
 Small model works great!!!
 
-TTS web interface runs on http://192.168.1.157:8888
+TTS web interface runs on http://192.168.1.154:8888

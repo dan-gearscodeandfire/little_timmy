@@ -63,7 +63,7 @@ DEFAULT_STT_MODEL = SMALL_DAN_MODEL  # Currently using: small_dan_ct2 for better
 # LLM Preprocessor endpoint
 LLM_ENDPOINT = "http://localhost:5000/api/webhook"
 # TTS Server endpoint
-TTS_SERVER_URL = "http://192.168.1.157:5051"
+TTS_SERVER_URL = "http://192.168.1.154:5051"
 EYE_LCD_URL = "https://192.168.1.110:8080"
 
 # Audio settings
@@ -157,9 +157,15 @@ def transcribe_audio(socketio_app):
         
         try:
             # Get all available audio chunks from the queue
+            chunk_count = 0
             while not audio_queue.empty():
-                audio_buffer.append(audio_queue.get())
+                chunk = audio_queue.get()
+                audio_buffer.append(chunk)
+                chunk_count += 1
                 last_audio_received_time = time.time()  # Update timestamp when audio is received
+            
+            if chunk_count > 0:
+                print(f"[DEBUG] Received {chunk_count} audio chunks, buffer size: {len(audio_buffer)}")
 
             # If there's audio in the buffer, transcribe it
             if not audio_buffer:
@@ -168,6 +174,8 @@ def transcribe_audio(socketio_app):
 
             # Convert buffer to a single numpy array for the model
             audio_data = np.concatenate(list(audio_buffer))
+            rms = np.sqrt(np.mean(audio_data**2))
+            print(f"[DEBUG] Transcribing {len(audio_buffer)} chunks, RMS level: {rms:.4f}")
             
             # Perform transcription with VAD filter enabled to ignore background noise
             try:
@@ -197,11 +205,13 @@ def transcribe_audio(socketio_app):
                     raise
             # Join segments with a space to prevent run-on sentences.
             full_text = " ".join(seg.text for seg in segments).strip()
+            print(f"[DEBUG] Transcribed text: '{full_text}'")
 
             # Filter out sound effects and background noise - skip processing entirely
             full_text_stripped = full_text.strip()
             if (full_text_stripped.startswith('(') and full_text_stripped.endswith(')')) or \
                (full_text_stripped.startswith('[') and full_text_stripped.endswith(']')):
+                print(f"[DEBUG] Filtered out sound effect: '{full_text_stripped}'")
                 continue  # Skip processing sound effects entirely
 
             # Update the current text
@@ -259,8 +269,15 @@ def transcribe_audio(socketio_app):
 
 def record_audio():
     """Record audio from microphone and add to queue."""
+    print("[DEBUG] record_audio() function called")
+    import sys
+    sys.stdout.flush()
     p = pyaudio.PyAudio()
+    print("[DEBUG] PyAudio initialized")
+    sys.stdout.flush()
     try:
+        print(f"[DEBUG] Opening stream: FORMAT={FORMAT}, CHANNELS={CHANNELS}, RATE={RATE}, CHUNK={CHUNK}")
+        sys.stdout.flush()
         stream = p.open(
             format=FORMAT,
             channels=CHANNELS,
@@ -270,6 +287,7 @@ def record_audio():
         )
         
         print("Recording started...")
+        sys.stdout.flush()
         
         while transcription_thread_running:
             try:
@@ -351,16 +369,25 @@ def resume_listening():
 
 def start_transcription_service(model_size, gpu_device=0):
     """Start all the transcription service threads."""
+    import sys
     # Initialize the model
     initialize_model(model_size, gpu_device)
     
     # Start audio recording in a background thread
+    print("[DEBUG] Starting audio recording thread...")
+    sys.stdout.flush()
     audio_thread = threading.Thread(target=record_audio, daemon=True)
     audio_thread.start()
+    print(f"[DEBUG] Audio thread started: {audio_thread.is_alive()}")
+    sys.stdout.flush()
     
     # Start transcription in a background thread
+    print("[DEBUG] Starting transcription thread...")
+    sys.stdout.flush()
     transcription_thread = threading.Thread(target=transcribe_audio, args=(socketio,), daemon=True)
     transcription_thread.start()
+    print(f"[DEBUG] Transcription thread started: {transcription_thread.is_alive()}")
+    sys.stdout.flush()
     
     return audio_thread, transcription_thread
 

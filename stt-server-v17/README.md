@@ -11,13 +11,60 @@ Speech-to-Text server using faster-whisper for real-time transcription.
 - Echo cancellation during TTS playback
 - WebSocket support for live updates
 
+## Installation & Setup
+
+### Prerequisites
+- Python 3.11 or higher
+- Windows OS (for GPU acceleration with CUDA)
+- Microphone for audio input
+
+### Virtual Environment Setup
+
+This project uses a **shared virtual environment** located at:
+```
+C:\Users\dsm27\whisper\.venv
+```
+
+**If setting up for the first time:**
+
+1. Create the virtual environment (if it doesn't exist):
+```bash
+python -m venv C:\Users\dsm27\whisper\.venv
+```
+
+2. Activate the virtual environment:
+```bash
+C:\Users\dsm27\whisper\.venv\Scripts\activate.bat
+```
+
+3. Install dependencies:
+```bash
+cd C:\Users\dsm27\little_timmy\stt-server-v17
+pip install -r requirements.txt
+```
+
+4. Install PyTorch with CUDA support (for GPU acceleration):
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+### Custom Whisper Models
+
+This server uses custom faster-whisper models optimized for performance:
+- **Location**: `C:\Users\dsm27\whisper\WhisperLive\`
+- **tiny_dan_ct2** - Fast, smaller model (40MB)
+- **small_dan_ct2** - Better accuracy, larger model (248MB) **[Default]**
+
+These models should already be present if you've used the original setup.
+
 ## Configuration
 
-### Endpoints
+### Network Endpoints
 
-- **LLM Preprocessor**: `http://localhost:5000/api/webhook`
-- **TTS Server**: `http://192.168.1.157:5051`
-- **STT Web Interface**: `http://localhost:8888`
+- **STT Web Interface**: `http://localhost:8888` (this server)
+- **LLM Preprocessor**: `http://localhost:5000/api/webhook` (WSL)
+- **TTS Server**: `http://192.168.1.154:5051` (separate machine)
+- **Eye LCD Display**: `https://192.168.1.110:8080` (ESP32 device)
 
 ### Models
 
@@ -29,13 +76,27 @@ Change model in `timmy_hears.py` line 56.
 
 ## Usage
 
-### Start Server (TTS Mode)
+### Quick Start (Windows)
+
+**AI Mode with LLM (Recommended):**
+- Double-click: `START_STT_SERVER.bat`
+- Sends transcripts to LLM preprocessor for intelligent responses
+
+**TTS Mode (Direct Text-to-Speech):**
+- Double-click: `START_STT_TTS_MODE.bat`
+- Sends transcripts directly to TTS server
+
+### Manual Start
+
+**TTS Mode:**
 ```bash
+C:\Users\dsm27\whisper\.venv\Scripts\activate.bat
 python timmy_hears.py
 ```
 
-### Start Server (AI Mode with LLM)
+**AI Mode with LLM:**
 ```bash
+C:\Users\dsm27\whisper\.venv\Scripts\activate.bat
 python timmy_hears.py --ai
 ```
 
@@ -46,15 +107,15 @@ python timmy_hears.py --ai
 - `--gpu-device` - GPU device index (default: 0)
 - `--ai` - Send transcripts to LLM instead of TTS
 
-## Requirements
+## Dependencies
 
-- Python 3.11+
-- faster-whisper
-- Flask
-- Flask-SocketIO
-- PyAudio
-- numpy
-- requests
+See `requirements.txt` for full list. Key dependencies:
+- **faster-whisper** - Speech recognition engine
+- **Flask** & **Flask-SocketIO** - Web server and real-time updates
+- **PyAudio** - Audio capture from microphone
+- **numpy** - Audio data processing
+- **requests** - HTTP communication with LLM/TTS servers
+- **PyTorch** (with CUDA) - GPU acceleration for transcription
 
 ## Network Configuration
 

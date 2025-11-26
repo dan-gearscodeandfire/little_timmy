@@ -78,7 +78,7 @@ C:\Users\dsm27\little_timmy\          ← Git repository root
 
 - **STT Web Interface**: http://localhost:8888
 - **LLM Preprocessor**: http://localhost:5000/api/webhook ✅ (Fixed!)
-- **TTS Server**: http://192.168.1.157:5051
+- **TTS Server**: http://192.168.1.154:5051
 
 ---
 
@@ -86,12 +86,12 @@ C:\Users\dsm27\little_timmy\          ← Git repository root
 
 The startup scripts automatically activate:
 ```
-C:\Users\dsm27\whisper\WhisperLive\.venv
+C:\Users\dsm27\whisper\.venv
 ```
 
 If you need to manually activate:
 ```bash
-C:\Users\dsm27\whisper\WhisperLive\.venv\Scripts\activate.bat
+C:\Users\dsm27\whisper\.venv\Scripts\activate.bat
 ```
 
 ---

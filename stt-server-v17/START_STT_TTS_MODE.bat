@@ -10,7 +10,7 @@ echo.
 echo Location: %~dp0
 echo.
 echo Network Configuration:
-echo   - TTS Server: http://192.168.1.157:5051
+echo   - TTS Server: http://192.168.1.154:5051
 echo   - STT Web UI: http://localhost:8888
 echo.
 echo ================================================
