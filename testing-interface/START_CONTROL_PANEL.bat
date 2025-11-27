@@ -1,5 +1,4 @@
 @echo off
-@echo off
 REM Timmy Service Control Panel - Startup Script
 REM Double-click this file to launch the control panel
 REM 
