@@ -200,6 +200,27 @@
         .warning-banner strong {
             color: #f48771;
         }
+        
+        .global-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn-stop-all {
+            background: #d16969;
+            color: #ffffff;
+            padding: 12px 24px;
+            font-size: 16px;
+        }
+        
+        .btn-shutdown {
+            background: #942626;
+            color: #ffffff;
+            padding: 12px 24px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -211,6 +232,11 @@
         
         <div class="warning-banner">
             <strong>⚠️ Notice:</strong> Closing this control panel will automatically stop all running services.
+        </div>
+        
+        <div class="global-controls">
+            <button class="btn-stop-all" onclick="stopAllServices()">⏹️ Stop All Services</button>
+            <button class="btn-shutdown" onclick="shutdownControlPanel()">🔴 Shutdown Control Panel</button>
         </div>
         
         <div class="services-grid">
@@ -400,6 +426,51 @@
         
         // Initial load
         refreshAllStatus();
+        
+        // Global control functions
+        async function stopAllServices() {
+            if (!confirm('Stop all running services?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/stop_all', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                console.log('Stop all result:', result);
+                
+                setTimeout(refreshAllStatus, 1000);
+            } catch (error) {
+                alert(`Error stopping services: ${error}`);
+            }
+        }
+        
+        async function shutdownControlPanel() {
+            if (!confirm('Shutdown control panel? This will stop all services and close the control panel.')) {
+                return;
+            }
+            
+            try {
+                await fetch('/api/shutdown', {
+                    method: 'POST'
+                });
+                
+                // Show shutdown message
+                document.body.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; 
+                                background: #1e1e1e; color: #d4d4d4; font-family: 'Segoe UI', sans-serif;">
+                        <div style="text-align: center;">
+                            <h1 style="color: #f48771; margin-bottom: 20px;">🔴 Control Panel Shutdown</h1>
+                            <p>All services have been stopped.</p>
+                            <p style="color: #858585; margin-top: 20px;">You can close this window.</p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.log('Shutdown initiated');
+            }
+        }
     </script>
 </body>
 </html>

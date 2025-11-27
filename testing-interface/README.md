@@ -64,11 +64,22 @@ http://localhost:5555
 2. Service will terminate gracefully
 3. Red status badge indicates service is stopped
 
-### Auto-Cleanup
+### Stopping Services
 
-When you close the control panel (Ctrl+C in terminal):
-- All running services automatically stop
-- No orphaned processes left behind
+**Method 1: Stop Individual Services**
+- Click the **Stop** button for any running service
+
+**Method 2: Stop All Services**
+- Click the **⏹️ Stop All Services** button at the top
+- All running services stop, control panel stays active
+
+**Method 3: Shutdown Everything**
+- Click the **🔴 Shutdown Control Panel** button
+- Stops all services AND closes the control panel
+
+**Method 4: Terminal Ctrl+C**
+- Press Ctrl+C in the terminal running the control panel
+- Auto-cleanup stops all services
 
 ## Service Configuration
 

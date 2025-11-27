@@ -153,10 +153,24 @@ def stop_service(service_id):
             # Try graceful ollama quit first
             try:
                 subprocess.run(['ollama', 'quit'], timeout=3, capture_output=True)
+                time.sleep(0.5)
             except Exception:
                 pass
         
-        # Kill process tree
+        # For WSL v34 process, we need to kill via WSL
+        if service_id == 'v34':
+            try:
+                # Get all Python processes in WSL and kill the app.py ones
+                subprocess.run(
+                    ['wsl', 'bash', '-c', "pkill -9 -f 'app.py'"],
+                    timeout=5,
+                    capture_output=True
+                )
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"Error killing WSL v34 process: {e}")
+        
+        # Kill process tree using psutil
         try:
             parent = psutil.Process(process.pid)
             children = parent.children(recursive=True)
@@ -165,27 +179,44 @@ def stop_service(service_id):
             for child in children:
                 try:
                     child.terminate()
-                except psutil.NoSuchProcess:
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass
             
             # Terminate parent
-            parent.terminate()
+            try:
+                parent.terminate()
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
             
             # Wait for termination
-            gone, alive = psutil.wait_procs([parent] + children, timeout=3)
-            
-            # Force kill if still alive
-            for p in alive:
-                try:
-                    p.kill()
-                except psutil.NoSuchProcess:
-                    pass
+            try:
+                gone, alive = psutil.wait_procs([parent] + children, timeout=3)
+                
+                # Force kill if still alive
+                for p in alive:
+                    try:
+                        p.kill()
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        pass
+            except Exception:
+                pass
+                
         except psutil.NoSuchProcess:
             pass
+        except psutil.AccessDenied:
+            print(f"Warning: Access denied killing {service_id}, attempting alternate method...")
+            # Try taskkill as fallback
+            if sys.platform == 'win32':
+                try:
+                    subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], 
+                                 capture_output=True, timeout=3)
+                except Exception:
+                    pass
         except Exception as e:
             print(f"Error stopping {service_id}: {e}")
         
         service['process'] = None
+        time.sleep(0.2)  # Give system time to release resources
         return {'success': True}
     except Exception as e:
         return {'success': False, 'error': str(e)}
@@ -256,18 +287,60 @@ def get_logs(service_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/stop_all', methods=['POST'])
+def api_stop_all():
+    """Stop all running services."""
+    results = {}
+    for service_id in SERVICES:
+        results[service_id] = stop_service(service_id)
+    return jsonify({'results': results})
+
+@app.route('/api/shutdown', methods=['POST'])
+def api_shutdown():
+    """Shutdown the control panel and all services."""
+    def _shutdown():
+        time.sleep(0.5)  # Give response time to send
+        cleanup_services()
+        os._exit(0)
+    
+    threading.Thread(target=_shutdown, daemon=True).start()
+    return jsonify({'status': 'shutting down'})
+
 def cleanup_services():
     """Stop all running services on exit."""
     print("\n*** Stopping all services...")
+    sys.stdout.flush()
+    
     for service_id in SERVICES:
         try:
-            stop_service(service_id)
+            result = stop_service(service_id)
+            if result.get('success'):
+                print(f"  ✓ Stopped {service_id}")
+            else:
+                print(f"  - {service_id} was not running")
         except Exception as e:
-            print(f"Error stopping {service_id}: {e}")
+            print(f"  ✗ Error stopping {service_id}: {e}")
+        sys.stdout.flush()
+    
     print("*** All services stopped")
+    sys.stdout.flush()
+    time.sleep(0.5)  # Give processes time to clean up
 
-# Register cleanup on exit
+# Register cleanup handlers
 atexit.register(cleanup_services)
+
+def signal_handler(signum, frame):
+    """Handle Ctrl+C and other signals."""
+    print("\n*** Interrupt received, cleaning up...")
+    cleanup_services()
+    sys.exit(0)
+
+# Register signal handlers for proper cleanup
+signal.signal(signal.SIGINT, signal_handler)
+if hasattr(signal, 'SIGTERM'):
+    signal.signal(signal.SIGTERM, signal_handler)
+if sys.platform == 'win32' and hasattr(signal, 'SIGBREAK'):
+    signal.signal(signal.SIGBREAK, signal_handler)
 
 if __name__ == '__main__':
     print("=" * 60)
@@ -280,11 +353,37 @@ if __name__ == '__main__':
     print("\n" + "=" * 60)
     print("Press Ctrl+C to stop the control panel and all services")
     print("=" * 60 + "\n")
+    sys.stdout.flush()
     
     try:
+        # Run Flask in a way that allows cleanup
         socketio.run(app, host='0.0.0.0', port=5555, debug=False, allow_unsafe_werkzeug=True)
     except KeyboardInterrupt:
         print("\n*** Keyboard interrupt received")
+        sys.stdout.flush()
+    except Exception as e:
+        print(f"\n*** Error: {e}")
+        sys.stdout.flush()
     finally:
-        cleanup_services()
+        # Always cleanup, even if already done
+        try:
+            cleanup_services()
+        except Exception as e:
+            print(f"Cleanup error: {e}")
+            sys.stdout.flush()
+        
+        # Extra safety: kill any remaining service processes
+        print("\n*** Final cleanup check...")
+        sys.stdout.flush()
+        for service_id, service in SERVICES.items():
+            if service['process']:
+                try:
+                    if service['process'].poll() is None:
+                        service['process'].kill()
+                        print(f"  Force killed {service_id}")
+                except Exception:
+                    pass
+        
+        print("*** Control panel shutdown complete")
+        sys.stdout.flush()
 
