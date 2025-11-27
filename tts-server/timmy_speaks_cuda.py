@@ -8,6 +8,7 @@ import os
 import re
 import threading
 import time
+import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
@@ -18,6 +19,18 @@ from flask import Flask, jsonify, request
 import requests
 import warnings
 import urllib3
+
+# Add shared directory to path for latency tracking
+shared_dir = Path(__file__).parent.parent / "shared"
+if str(shared_dir) not in sys.path:
+    sys.path.append(str(shared_dir))
+
+try:
+    from latency_tracker import log_timing, Events
+    LATENCY_TRACKING_ENABLED = True
+except ImportError:
+    LATENCY_TRACKING_ENABLED = False
+    print("[WARNING] Latency tracking not available")
 
 # Suppress only HTTPS certificate warnings for verify=False calls
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -210,18 +223,25 @@ class PiperEngine:
             if chunk:
                 yield chunk
 
-    def speak(self, text: str, synth_args: Dict[str, Any]) -> None:
+    def speak(self, text: str, synth_args: Dict[str, Any], request_id: str = None) -> None:
         if not text.strip():
             return
         optimized = optimize_text_for_speed(text)
 
         start_time = time.perf_counter()
-        LOGGER.debug("SPEAK_START chars=%d", len(optimized))
+        LOGGER.debug("SPEAK_START chars=%d request_id=%s", len(optimized), request_id)
+        
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "tts", Events.TTS_PAUSE_SENT)
+        
         post_hearing_action("pause-listening", wait=True)
         # Give STT server time to fully pause and clear buffers
         time.sleep(0.2)  # Increased from 0.05 to 0.2 seconds
         # Fire-and-forget external indicator for speaking state
         post_indicator_text(INDICATOR_SPEAKING_TEXT)
+        
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "tts", Events.TTS_SYNTHESIS_START)
 
         with self.lock:
             config = self.voice.config
@@ -243,9 +263,16 @@ class PiperEngine:
 
             with stream_obj as stream:
                 chunks_written = 0
+                first_chunk = True
                 for chunk in self._iterate_chunks(optimized, synth_args):
                     if not chunk:
                         continue
+                    
+                    # Log when first audio chunk starts playing
+                    if first_chunk and LATENCY_TRACKING_ENABLED and request_id:
+                        log_timing(request_id, "tts", Events.TTS_AUDIO_PLAYBACK_START)
+                        first_chunk = False
+                    
                     chunks_written += 1
                     raw: Optional[bytes] = None
                     if isinstance(chunk, (bytes, bytearray, memoryview)):
@@ -303,9 +330,13 @@ class PiperEngine:
                                         stream.write(arr16)
             
             LOGGER.info(f"Audio playback complete: {chunks_written} chunks written to stream")
+            
+            if LATENCY_TRACKING_ENABLED and request_id:
+                log_timing(request_id, "tts", Events.TTS_AUDIO_PLAYBACK_COMPLETE, 
+                         {"chunks_written": chunks_written})
 
         duration = time.perf_counter() - start_time
-        LOGGER.debug("SPEAK_END duration_s=%.3f", duration)
+        LOGGER.debug("SPEAK_END duration_s=%.3f request_id=%s", duration, request_id)
         with _metrics_lock:
             _last_metrics.update({
                 "provider": "CUDA",
@@ -317,6 +348,10 @@ class PiperEngine:
 
         # Wait for audio to finish playing and speaker output to stop
         time.sleep(0.3)  # Increased from 0.05 to 0.3 seconds
+        
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "tts", Events.TTS_RESUME_SENT)
+        
         post_hearing_action("resume-listening", wait=False)
         # Fire-and-forget external indicator for listening state
         post_indicator_text(INDICATOR_LISTENING_TEXT)
@@ -366,12 +401,19 @@ def build_flask_app(engine: PiperEngine, synth_args: Dict[str, Any]) -> Flask:
         if not text:
             return jsonify({"error": "No text provided"}), 400
 
-        LOGGER.info(f"TTS request received: {len(text)} chars")
+        # Get request_id from query params or form
+        request_id = request.args.get('request_id') or (request.get_json(silent=True) or {}).get('request_id')
+        
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "tts", Events.TTS_REQUEST_RECEIVED, 
+                     {"text_length": len(text)})
+        
+        LOGGER.info(f"TTS request received: {len(text)} chars [request_id={request_id}]")
         
         def _worker() -> None:
             try:
-                LOGGER.info(f"Starting speech synthesis for: '{text[:50]}...'")
-                engine.speak(text, synth_args)
+                LOGGER.info(f"Starting speech synthesis for: '{text[:50]}...' [request_id={request_id}]")
+                engine.speak(text, synth_args, request_id)
                 LOGGER.info("Speech synthesis completed successfully")
             except Exception as e:
                 LOGGER.error(f"Playback error: {e}", exc_info=True)

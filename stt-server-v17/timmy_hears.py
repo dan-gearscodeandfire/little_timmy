@@ -14,6 +14,20 @@ import queue
 import requests
 import json
 import urllib3
+import sys
+from pathlib import Path
+
+# Add shared directory to path for latency tracking
+shared_dir = Path(__file__).parent.parent / "shared"
+if str(shared_dir) not in sys.path:
+    sys.path.append(str(shared_dir))
+
+try:
+    from latency_tracker import log_timing, generate_request_id, Events
+    LATENCY_TRACKING_ENABLED = True
+except ImportError:
+    LATENCY_TRACKING_ENABLED = False
+    print("[WARNING] Latency tracking not available - shared module not found")
 
 # Suppress InsecureRequestWarning for verify=False notifications
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -227,6 +241,13 @@ def transcribe_audio(socketio_app):
                     final_transcripts = transcript_manager.get_final_transcripts()
                     if final_transcripts:
                         latest_entry = final_transcripts[-1]
+                        
+                        # Generate request ID for latency tracking
+                        request_id = generate_request_id() if LATENCY_TRACKING_ENABLED else None
+                        if LATENCY_TRACKING_ENABLED:
+                            log_timing(request_id, "stt", Events.STT_TRANSCRIPT_FINALIZED, 
+                                     {"text_length": len(latest_entry)})
+                        
                         # Non-blocking notify only when actual speech has been finalized
                         try:
                             socketio_app.start_background_task(notify_eye, "THINKING")
@@ -235,8 +256,8 @@ def transcribe_audio(socketio_app):
 
                         # Send to either LLM or TTS based on --ai flag
                         if ai_mode:
-                            print(f"[AI] Sending to LLM: {latest_entry}")
-                            send_to_llm_preprocessor(latest_entry)
+                            print(f"[AI] Sending to LLM: {latest_entry} [request_id={request_id}]")
+                            send_to_llm_preprocessor(latest_entry, request_id)
                         else:
                             print(f"[TTS] Sending to TTS: {latest_entry}")
                             send_to_tts_server(latest_entry)
@@ -416,12 +437,19 @@ def send_to_tts_server(text):
     except requests.exceptions.RequestException as e:
         print(f"Error sending to TTS server: {e}")
 
-def send_to_llm_preprocessor(text):
+def send_to_llm_preprocessor(text, request_id=None):
     """
     Send finalized transcript text to the LLM preprocessor endpoint.
     """
     try:
         payload = {"text": text}
+        if request_id:
+            payload["request_id"] = request_id
+            
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "stt", Events.STT_SENDING_TO_V34, 
+                     {"text_length": len(text)})
+        
         response = requests.post(
             LLM_ENDPOINT,
             headers={"Content-Type": "application/json"},

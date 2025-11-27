@@ -1,0 +1,7 @@
+# Latency log file - don't commit timing data
+latency.log
+
+# Python cache
+__pycache__/
+*.pyc
+

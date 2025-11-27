@@ -10,6 +10,8 @@ import requests
 import time
 import eventlet
 import threading
+import sys
+from pathlib import Path
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit
 from sentence_transformers import SentenceTransformer
@@ -23,6 +25,18 @@ import llm
 import memory
 import vision_state
 import fine_tuning_capture
+
+# Add shared directory to path for latency tracking
+shared_dir = Path(__file__).parent.parent / "shared"
+if str(shared_dir) not in sys.path:
+    sys.path.append(str(shared_dir))
+
+try:
+    from latency_tracker import log_timing, Events
+    LATENCY_TRACKING_ENABLED = True
+except ImportError:
+    LATENCY_TRACKING_ENABLED = False
+    utils.debug_print("[WARNING] Latency tracking not available")
 
 # --- Flask and SocketIO Setup ---
 app = Flask(__name__)
@@ -126,12 +140,12 @@ def is_important_user_message(msg: str) -> tuple[bool, dict]:
     should_embed = metadata.get("importance", 0) >= 2
     return should_embed, metadata
 
-def process_user_message(user_input: str):
+def process_user_message(user_input: str, request_id=None):
     """
     Core logic to process a user's message, generate a response, and interact with memory.
     """
     start_time = time.time()
-    utils.debug_print(f"*** Debug: Processing user message: {user_input}")
+    utils.debug_print(f"*** Debug: Processing user message: {user_input} [request_id={request_id}]")
 
     # 1. Check if this is praise for the previous response (fine-tuning capture)
     if fine_tuning_capture.is_praise(user_input) and len(utils.conversation_history) >= 2:
@@ -151,7 +165,15 @@ def process_user_message(user_input: str):
     
     # 2. Metadata generation
     t1 = time.time()
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_CLASSIFICATION_START)
+    
     should_embed_user, user_metadata = is_important_user_message(user_input)
+    
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_CLASSIFICATION_COMPLETE, 
+                 {"importance": user_metadata.get("importance")})
+    
     utils.debug_print(f"--- Step 1 (Metadata Generation) took: {time.time() - t1:.2f}s")
     
     # 3. Add user message to conversation history
@@ -167,6 +189,9 @@ def process_user_message(user_input: str):
     
     # 4. Context retrieval (can be disabled for KV/session-only testing)
     t3 = time.time()
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_RETRIEVAL_START)
+    
     relevant_chunks = []
     context_text = ""
     if getattr(config, "RETRIEVAL_ENABLED", True):
@@ -200,6 +225,11 @@ def process_user_message(user_input: str):
         context_text = "\n".join(context_strings)
     else:
         utils.debug_print("*** Debug: Retrieval disabled by config.RETRIEVAL_ENABLED=False (KV/session-only mode)")
+    
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_RETRIEVAL_COMPLETE, 
+                 {"num_chunks": len(relevant_chunks)})
+    
     utils.debug_print(f"--- Step 4 (Context Retrieval) took: {time.time() - t3:.2f}s")
     
     # 5. Main LLM call - MEGAPROMPT STRATEGY WITH KV CONTEXT
@@ -241,6 +271,10 @@ def process_user_message(user_input: str):
             except Exception:
                 pass
     
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_PROMPT_BUILT, 
+                 {"prompt_chars": len(prompt_to_send)})
+    
     # Save the actual prompt sent for debugging
     with open("payloads.txt", "a", encoding="utf-8") as f:
         f.write(f"=== Megaprompt at {time.strftime('%Y-%m-%d %H:%M:%S')} ===\n")
@@ -273,9 +307,19 @@ def process_user_message(user_input: str):
             utils.debug_print(f"*** Debug: Existing context length: {len(prev_ctx)}")
         except Exception:
             utils.debug_print(f"*** Debug: Existing context present (length unknown)")
+    
     # Visual turns: lower temperature; reuse base for others
     temperature = 0.1 if llm.is_visual_question(user_input) else 0.4
+    
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_OLLAMA_SENT, 
+                 {"temperature": temperature})
+    
     ai_response_text, new_ctx, stats = llm.generate_api_call(prompt_to_send, context=prev_ctx, raw=True, temperature=temperature)
+    
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_OLLAMA_RECEIVED, 
+                 {"response_length": len(ai_response_text) if isinstance(ai_response_text, str) else 0})
     # Only mark tail mode for the baseline/tail strategy
     if not getattr(config, "USE_FULL_MEGA_PROMPT", True):  # Fixed: default should be True
         SESSION_TAIL_MODE[SESSION_ID] = True
@@ -388,16 +432,29 @@ def handle_webhook():
         return {"error": "Invalid payload. 'text' field is required."}, 400
     
     user_input = data["text"]
+    request_id = data.get("request_id")  # Get request_id from STT if provided
+    
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_WEBHOOK_RECEIVED, 
+                 {"text_length": len(user_input)})
+    
     utils.debug_print("*********************************************BEGIN*********************************************")
-    utils.debug_print(f"*** Debug: Received user_message via webhook: {user_input}")
+    utils.debug_print(f"*** Debug: Received user_message via webhook: {user_input} [request_id={request_id}]")
 
     socketio.emit("display_user_message", {"message": user_input})
-    ai_response = process_user_message(user_input)
+    ai_response = process_user_message(user_input, request_id)
     socketio.emit("bot_message", {"message": ai_response})
+    
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_SENDING_TO_TTS, 
+                 {"response_length": len(ai_response)})
     
     try:
         proxies = {'http': None, 'https': None}
-        eventlet.tpool.execute(requests.get, config.TTS_API_URL, params={"text": ai_response}, timeout=2, proxies=proxies)
+        tts_params = {"text": ai_response}
+        if request_id:
+            tts_params["request_id"] = request_id
+        eventlet.tpool.execute(requests.get, config.TTS_API_URL, params=tts_params, timeout=2, proxies=proxies)
     except requests.exceptions.RequestException as e:
         utils.debug_print(f"*** Debug: Could not connect to TTS API: {e}")
         
