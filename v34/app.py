@@ -272,8 +272,12 @@ def process_user_message(user_input: str, request_id=None):
                 pass
     
     if LATENCY_TRACKING_ENABLED and request_id:
+        # Calculate estimated tokens for prompt
+        estimated_tokens = len(prompt_to_send) // 4  # Rough estimate
         log_timing(request_id, "v34", Events.V34_PROMPT_BUILT, 
-                 {"prompt_chars": len(prompt_to_send)})
+                 {"prompt_chars": len(prompt_to_send), 
+                  "prompt_tokens_est": estimated_tokens,
+                  "tail_mode": tail_mode_enabled})
     
     # Save the actual prompt sent for debugging
     with open("payloads.txt", "a", encoding="utf-8") as f:
@@ -312,14 +316,28 @@ def process_user_message(user_input: str, request_id=None):
     temperature = 0.1 if llm.is_visual_question(user_input) else 0.4
     
     if LATENCY_TRACKING_ENABLED and request_id:
+        context_len = len(prev_ctx) if prev_ctx else 0
         log_timing(request_id, "v34", Events.V34_OLLAMA_SENT, 
-                 {"temperature": temperature})
+                 {"temperature": temperature, 
+                  "kv_context_length": context_len,
+                  "has_kv_cache": context_len > 0})
     
     ai_response_text, new_ctx, stats = llm.generate_api_call(prompt_to_send, context=prev_ctx, raw=True, temperature=temperature)
     
     if LATENCY_TRACKING_ENABLED and request_id:
-        log_timing(request_id, "v34", Events.V34_OLLAMA_RECEIVED, 
-                 {"response_length": len(ai_response_text) if isinstance(ai_response_text, str) else 0})
+        # Include Ollama stats for correlation analysis
+        ollama_metadata = {
+            "response_length": len(ai_response_text) if isinstance(ai_response_text, str) else 0,
+            "new_context_length": len(new_ctx) if new_ctx else 0
+        }
+        if stats:
+            ollama_metadata.update({
+                "prompt_eval_count": stats.get('prompt_eval_count', 0),
+                "eval_count": stats.get('eval_count', 0),
+                "prompt_eval_duration_ms": stats.get('prompt_eval_duration', 0) / 1_000_000,
+                "eval_duration_ms": stats.get('eval_duration', 0) / 1_000_000,
+            })
+        log_timing(request_id, "v34", Events.V34_OLLAMA_RECEIVED, ollama_metadata)
     # Only mark tail mode for the baseline/tail strategy
     if not getattr(config, "USE_FULL_MEGA_PROMPT", True):  # Fixed: default should be True
         SESSION_TAIL_MODE[SESSION_ID] = True
@@ -436,7 +454,7 @@ def handle_webhook():
     
     if LATENCY_TRACKING_ENABLED and request_id:
         log_timing(request_id, "v34", Events.V34_WEBHOOK_RECEIVED, 
-                 {"text_length": len(user_input)})
+                 {"text_length": len(user_input), "session_id": SESSION_ID})
     
     utils.debug_print("*********************************************BEGIN*********************************************")
     utils.debug_print(f"*** Debug: Received user_message via webhook: {user_input} [request_id={request_id}]")

@@ -7,21 +7,31 @@ Just use Timmy normally - latency tracking happens automatically in the backgrou
 
 ### Step 2: Analyze Results
 
-**Show last 5 conversations:**
+**Option A: Individual Request Analysis**
 ```bash
 cd ~/timmy-backend/little-timmy/shared
+
+# Show last 5 conversations
 python analyze_latency.py --tail 5
-```
 
-**Show all data:**
-```bash
+# Show all data
 python analyze_latency.py
-```
 
-**Show specific request:**
-```bash
+# Show specific request
 python analyze_latency.py --request abc123de
 ```
+
+**Option B: Session-Based Analysis** (Recommended for long conversations)
+```bash
+# See how latency changes within sessions
+python analyze_sessions.py
+```
+
+This shows:
+- All requests grouped by conversation session
+- Prompt size vs processing time
+- KV cache effectiveness (1st request vs subsequent)
+- Whether longer conversations slow down
 
 ### Step 3: Identify Bottlenecks
 

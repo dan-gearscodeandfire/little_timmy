@@ -30,7 +30,7 @@ log_timing(request_id, "stt", Events.STT_TRANSCRIPT_FINALIZED)
 ```
 
 ### `analyze_latency.py`
-Analysis tool to parse and display timing data.
+Analysis tool to parse and display timing data for individual requests.
 
 **Usage:**
 ```bash
@@ -46,6 +46,22 @@ python analyze_latency.py --request abc123de
 # Clear log file
 python analyze_latency.py --clear
 ```
+
+### `analyze_sessions.py`
+Session-based analysis showing how latency changes over conversation.
+
+**Usage:**
+```bash
+# Analyze all sessions
+python analyze_sessions.py
+```
+
+**Shows:**
+- All requests grouped by session
+- Prompt size vs Ollama time correlation
+- KV cache effectiveness (first request vs subsequent)
+- Speedup from KV cache reuse
+- Trends within long conversations
 
 ### `latency.log`
 Centralized log file (JSON lines format).
