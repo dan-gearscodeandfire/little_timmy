@@ -1,0 +1,20 @@
+# Logs directory - service output logs
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environment (if created locally)
+venv/
+.venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
