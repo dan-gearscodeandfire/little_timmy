@@ -344,6 +344,9 @@ def stream():
 def pause_listening():
     """Pauses the audio processing."""
     global is_speech_synthesis_active
+    print(">>> [PAUSE] Received pause-listening request from TTS")
+    import sys
+    sys.stdout.flush()
     with synthesis_lock:
         is_speech_synthesis_active = True
         # Clear audio_queue to prevent processing old audio chunks that could cause echo
@@ -352,19 +355,24 @@ def pause_listening():
             audio_queue.get()
             queue_cleared_count += 1
         if queue_cleared_count > 0:
-            print(f">>> Cleared {queue_cleared_count} audio chunks from queue to prevent echo")
-    print(">>> Listening paused by remote server.")
+            print(f">>> [PAUSE] Cleared {queue_cleared_count} audio chunks from queue to prevent echo")
+    print(">>> [PAUSE] Listening paused - audio capture now dropped")
+    sys.stdout.flush()
     return jsonify({"status": "listening paused"})
 
 @app.route('/resume-listening', methods=['POST'])
 def resume_listening():
     """Resumes the audio processing."""
     global is_speech_synthesis_active
+    print(">>> [RESUME] Received resume-listening request from TTS")
+    import sys
+    sys.stdout.flush()
     with synthesis_lock:
         is_speech_synthesis_active = False
         # Note: No need to clear buffers here - they were already cleared on pause
         # and we want to start fresh with new audio input
-    print(">>> Listening resumed by remote server.")
+    print(">>> [RESUME] Listening resumed - audio capture now active")
+    sys.stdout.flush()
     return jsonify({"status": "listening resumed"})
 
 def start_transcription_service(model_size, gpu_device=0):
