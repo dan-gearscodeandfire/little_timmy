@@ -47,7 +47,7 @@ class TranscriptFilter(logging.Filter):
 
 # Global variables to store transcription data
 transcript_manager = TranscriptManager(max_history=50)
-PAUSE_THRESHOLD = 1 #econds of silence to consider speech finished
+PAUSE_THRESHOLD = 0.5  # seconds of silence to consider speech finished (reduced from 1.0s for faster response)
 
 # Flask app configuration
 app = Flask(__name__, static_folder=".", static_url_path="")
