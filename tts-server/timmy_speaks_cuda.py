@@ -226,17 +226,27 @@ class PiperEngine:
         with self.lock:
             config = self.voice.config
             sample_rate = int(getattr(config, "sample_rate", 22050))
+            
+            LOGGER.info(f"Opening audio stream: sample_rate={sample_rate}, channels=1, dtype=int16")
+            
+            try:
+                stream_obj = sd.OutputStream(
+                    samplerate=sample_rate,
+                    channels=1,
+                    dtype="int16",
+                    blocksize=max(128, sample_rate // 20),
+                    device=None,
+                )
+            except Exception as e:
+                LOGGER.error(f"Failed to open audio stream: {e}")
+                raise
 
-            with sd.OutputStream(
-                samplerate=sample_rate,
-                channels=1,
-                dtype="int16",
-                blocksize=max(128, sample_rate // 20),
-                device=None,
-            ) as stream:
+            with stream_obj as stream:
+                chunks_written = 0
                 for chunk in self._iterate_chunks(optimized, synth_args):
                     if not chunk:
                         continue
+                    chunks_written += 1
                     raw: Optional[bytes] = None
                     if isinstance(chunk, (bytes, bytearray, memoryview)):
                         raw = bytes(chunk)
@@ -291,6 +301,8 @@ class PiperEngine:
                                     arr16 = (arrf * 32767.0).astype(np.int16, copy=False)
                                     if arr16.size:
                                         stream.write(arr16)
+            
+            LOGGER.info(f"Audio playback complete: {chunks_written} chunks written to stream")
 
         duration = time.perf_counter() - start_time
         LOGGER.debug("SPEAK_END duration_s=%.3f", duration)
@@ -354,11 +366,15 @@ def build_flask_app(engine: PiperEngine, synth_args: Dict[str, Any]) -> Flask:
         if not text:
             return jsonify({"error": "No text provided"}), 400
 
+        LOGGER.info(f"TTS request received: {len(text)} chars")
+        
         def _worker() -> None:
             try:
+                LOGGER.info(f"Starting speech synthesis for: '{text[:50]}...'")
                 engine.speak(text, synth_args)
+                LOGGER.info("Speech synthesis completed successfully")
             except Exception as e:
-                LOGGER.error("Playback error: %s", e)
+                LOGGER.error(f"Playback error: {e}", exc_info=True)
 
         threading.Thread(target=_worker, daemon=True).start()
         return jsonify({"status": "playing", "text": text})

@@ -70,6 +70,14 @@ def log_reader_thread(service_id):
     if not process:
         return
     
+    # Open log file once with error handling
+    log_file_handle = None
+    try:
+        log_file_handle = open(service['log_file'], 'a', encoding='utf-8', buffering=1)
+    except Exception as e:
+        print(f"Warning: Could not open log file for {service_id}: {e}")
+        # Continue without file logging, just emit to websocket
+    
     try:
         # Read both stdout and stderr
         for line in iter(process.stdout.readline, b''):
@@ -78,19 +86,36 @@ def log_reader_thread(service_id):
             try:
                 decoded = line.decode('utf-8', errors='ignore').rstrip()
                 if decoded:
-                    # Write to log file
-                    with open(service['log_file'], 'a', encoding='utf-8') as f:
-                        f.write(decoded + '\n')
-                    # Emit to websocket
+                    # Write to log file if available
+                    if log_file_handle:
+                        try:
+                            log_file_handle.write(decoded + '\n')
+                            log_file_handle.flush()
+                        except Exception:
+                            pass  # Silently ignore log file write errors
+                    
+                    # Emit to websocket (primary output)
                     socketio.emit('log_output', {
                         'service': service_id,
                         'line': decoded
                     })
             except Exception as e:
-                print(f"Error reading line from {service_id}: {e}")
+                # Only print first few errors to avoid spam
+                if not hasattr(log_reader_thread, f'_error_count_{service_id}'):
+                    setattr(log_reader_thread, f'_error_count_{service_id}', 0)
+                
+                count = getattr(log_reader_thread, f'_error_count_{service_id}')
+                if count < 3:
+                    print(f"Error reading line from {service_id}: {e}")
+                    setattr(log_reader_thread, f'_error_count_{service_id}', count + 1)
     except Exception as e:
         print(f"Log reader thread error for {service_id}: {e}")
     finally:
+        if log_file_handle:
+            try:
+                log_file_handle.close()
+            except Exception:
+                pass
         print(f"Log reader thread stopped for {service_id}")
 
 def start_service(service_id):
