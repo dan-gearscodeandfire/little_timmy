@@ -23,8 +23,8 @@ SERVICES = {
     'tts': {
         'name': 'TTS Server',
         'command': r'C:\Users\dsm27\piper\.venv\Scripts\python.exe',
-        'args': [r'C:\Users\dsm27\little_timmy\tts-server\timmy_speaks_cuda.py'],
-        'cwd': r'C:\Users\dsm27\little_timmy\tts-server',
+        'args': [r'\\wsl.localhost\Ubuntu-20.04\home\gearscodeandfire\timmy-backend\little-timmy\tts-server\timmy_speaks_cuda.py'],
+        'cwd': r'\\wsl.localhost\Ubuntu-20.04\home\gearscodeandfire\timmy-backend\little-timmy\tts-server',
         'log_file': 'logs/tts.log',
         'process': None,
         'log_thread': None,
@@ -32,8 +32,8 @@ SERVICES = {
     'stt': {
         'name': 'STT Server',
         'command': r'C:\Users\dsm27\whisper\.venv\Scripts\python.exe',
-        'args': [r'C:\Users\dsm27\little_timmy\stt-server-v17\timmy_hears.py', '--ai'],
-        'cwd': r'C:\Users\dsm27\little_timmy\stt-server-v17',
+        'args': [r'\\wsl.localhost\Ubuntu-20.04\home\gearscodeandfire\timmy-backend\little-timmy\stt-server-v17\timmy_hears.py', '--ai'],
+        'cwd': r'\\wsl.localhost\Ubuntu-20.04\home\gearscodeandfire\timmy-backend\little-timmy\stt-server-v17',
         'log_file': 'logs/stt.log',
         'process': None,
         'log_thread': None,
