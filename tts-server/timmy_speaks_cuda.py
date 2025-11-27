@@ -87,10 +87,14 @@ def post_hearing_action(action: str, wait: bool) -> None:
         return
     def _send() -> None:
         try:
-            timeout = 0.3 if wait else 0.1
-            requests.post(f"{HEARING_SERVER_URL}/{action}", timeout=timeout)
-        except requests.RequestException:
-            pass
+            timeout = 0.5 if wait else 0.1  # Increased timeout for pause
+            resp = requests.post(f"{HEARING_SERVER_URL}/{action}", timeout=timeout)
+            if resp.status_code == 200:
+                LOGGER.debug(f"STT {action} successful")
+            else:
+                LOGGER.warning(f"STT {action} returned status {resp.status_code}")
+        except requests.RequestException as e:
+            LOGGER.warning(f"STT {action} failed: {e}")
     if wait:
         _send()
     else:
@@ -214,8 +218,9 @@ class PiperEngine:
         start_time = time.perf_counter()
         LOGGER.debug("SPEAK_START chars=%d", len(optimized))
         post_hearing_action("pause-listening", wait=True)
+        # Give STT server time to fully pause and clear buffers
+        time.sleep(0.2)  # Increased from 0.05 to 0.2 seconds
         # Fire-and-forget external indicator for speaking state
-        time.sleep(0.05)
         post_indicator_text(INDICATOR_SPEAKING_TEXT)
 
         with self.lock:
@@ -298,7 +303,8 @@ class PiperEngine:
                 "finished_at": None,
             })
 
-        time.sleep(0.05)
+        # Wait for audio to finish playing and speaker output to stop
+        time.sleep(0.3)  # Increased from 0.05 to 0.3 seconds
         post_hearing_action("resume-listening", wait=False)
         # Fire-and-forget external indicator for listening state
         post_indicator_text(INDICATOR_LISTENING_TEXT)
