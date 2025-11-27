@@ -850,8 +850,11 @@ def generate_api_call(megaprompt, context=None, raw: bool = True, temperature: f
             "repeat_penalty": 1.2
         }
     }
-    if raw:
-        payload["raw"] = True
+    # REMOVED: raw=True prevents Ollama from returning context arrays
+    # Using template mode (raw=False) allows KV cache to function
+    # Diagnostic test confirmed: raw=False returns context, raw=True doesn't
+    # if raw:
+    #     payload["raw"] = True
     
     # Use explicit context to append to prior KV state and preserve conversation
     if context:

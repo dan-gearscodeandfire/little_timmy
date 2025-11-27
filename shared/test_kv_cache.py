@@ -7,7 +7,7 @@ Tests different configurations to find what works.
 import requests
 import json
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = "http://windows-host:11434/api/generate"
 MODEL = "llama3.2:3b-instruct-q4_K_M"
 
 def test_with_raw_mode():
