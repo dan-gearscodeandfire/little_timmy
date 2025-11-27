@@ -94,22 +94,20 @@ git push origin main
 ## 🗂️ What About C:\Users\dsm27\little_timmy?
 
 ### **Current Status:**
-The Windows copy at `C:\Users\dsm27\little_timmy` is a **duplicate** that's no longer needed.
+The Windows copy at `C:\Users\dsm27\little_timmy` is a **duplicate** that's no longer actively used.
 
-### **Options:**
+### **⚠️ TODO: DELETE LATER**
 
-**Option A: Delete it** (Recommended)
-```bash
+This directory should be deleted once you're confident the WSL-only workflow is stable:
+
+```powershell
+# When ready to delete:
 Remove-Item -Recurse -Force C:\Users\dsm27\little_timmy
 ```
 
-**Option B: Archive it**
-```bash
-Rename-Item C:\Users\dsm27\little_timmy C:\Users\dsm27\little_timmy.backup
-```
+**Keeping temporarily as backup** in case any issues arise with WSL workflow.
 
-**Option C: Keep for reference**
-Leave it but never commit from there
+**DO NOT commit from this location** - It's for reference only.
 
 ## 🎯 Single Source of Truth
 
