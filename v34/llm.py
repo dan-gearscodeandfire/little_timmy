@@ -856,6 +856,10 @@ def generate_api_call(megaprompt, context=None, raw: bool = True, temperature: f
     # Use explicit context to append to prior KV state and preserve conversation
     if context:
         payload["context"] = context
+        debug_print(f"*** Debug: [KV CACHE] Sending existing context to Ollama, length: {len(context)}")
+    else:
+        debug_print(f"*** Debug: [KV CACHE] No existing context - this is first request in session")
+    
     # Also include session_id for server-side residency
     if hasattr(config, 'OLLAMA_SESSION_ID'):
         payload["session_id"] = config.OLLAMA_SESSION_ID
@@ -868,6 +872,7 @@ def generate_api_call(megaprompt, context=None, raw: bool = True, temperature: f
         debug_print(f"*** Debug: Calling generate API: {config.OLLAMA_API_URL}")
         debug_print(f"*** Debug: Model={payload['model']}, num_ctx={payload['options']['num_ctx']}, keep_alive={payload['keep_alive']}, session_id_set={has_session}")
         debug_print(f"*** Debug: Prompt size: {prompt_chars} chars, ~{est_tokens} tokens (estimate)")
+        debug_print(f"*** Debug: raw_mode={payload.get('raw')}, context_provided={'context' in payload}")
     except Exception:
         pass
     
@@ -891,6 +896,14 @@ def generate_api_call(megaprompt, context=None, raw: bool = True, temperature: f
                     collected.append(token)
                 if chunk.get("done"):
                     final_context = chunk.get("context", final_context)
+                    
+                    # DEBUG: Log what Ollama returns
+                    debug_print(f"*** Debug: Ollama done chunk keys: {list(chunk.keys())}")
+                    debug_print(f"*** Debug: Ollama context field present: {'context' in chunk}")
+                    if 'context' in chunk:
+                        ctx = chunk.get('context')
+                        debug_print(f"*** Debug: Context type: {type(ctx)}, length: {len(ctx) if ctx else 0}")
+                    
                     stats = {
                         "prompt_eval_count": chunk.get("prompt_eval_count"),
                         "prompt_eval_duration": chunk.get("prompt_eval_duration"),
