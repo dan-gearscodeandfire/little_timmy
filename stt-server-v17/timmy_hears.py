@@ -236,15 +236,22 @@ def transcribe_audio(socketio_app):
 
             # Check for pauses to finalize a transcript segment
             if time.time() - last_transcription_time > PAUSE_THRESHOLD:
+                # Generate request ID early to track entire finalization process
+                request_id = generate_request_id() if LATENCY_TRACKING_ENABLED else None
+                
+                # Log when pause threshold is reached
+                if LATENCY_TRACKING_ENABLED and request_id:
+                    log_timing(request_id, "stt", "stt_pause_detected", 
+                             {"pause_threshold": PAUSE_THRESHOLD})
+                
                 if transcript_manager.finalize_text():
                     # Get the latest finalized transcript entry
                     final_transcripts = transcript_manager.get_final_transcripts()
                     if final_transcripts:
                         latest_entry = final_transcripts[-1]
                         
-                        # Generate request ID for latency tracking
-                        request_id = generate_request_id() if LATENCY_TRACKING_ENABLED else None
-                        if LATENCY_TRACKING_ENABLED:
+                        # Log after finalization complete
+                        if LATENCY_TRACKING_ENABLED and request_id:
                             log_timing(request_id, "stt", Events.STT_TRANSCRIPT_FINALIZED, 
                                      {"text_length": len(latest_entry)})
                         
@@ -450,6 +457,11 @@ def send_to_llm_preprocessor(text, request_id=None):
             log_timing(request_id, "stt", Events.STT_SENDING_TO_V34, 
                      {"text_length": len(text)})
         
+        # Log right before HTTP request
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "stt", "stt_http_request_start", 
+                     {"endpoint": LLM_ENDPOINT})
+        
         response = requests.post(
             LLM_ENDPOINT,
             headers={"Content-Type": "application/json"},
@@ -457,6 +469,12 @@ def send_to_llm_preprocessor(text, request_id=None):
             timeout=30  # Increased timeout for LLM preprocessing (classification + retrieval + generation)
         )
         response.raise_for_status()
+        
+        # Log right after HTTP response received
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "stt", "stt_http_response_received", 
+                     {"status_code": response.status_code})
+        
         result = response.json()
         print(f"[OK] LLM Response: {result.get('response', 'No response')}")
         return result
