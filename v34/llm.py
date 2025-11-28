@@ -850,11 +850,14 @@ def generate_api_call(megaprompt, context=None, raw: bool = True, temperature: f
             "repeat_penalty": 1.2
         }
     }
-    # REMOVED: raw=True prevents Ollama from returning context arrays
-    # Using template mode (raw=False) allows KV cache to function
-    # Diagnostic test confirmed: raw=False returns context, raw=True doesn't
-    # if raw:
-    #     payload["raw"] = True
+    if raw:
+        payload["raw"] = True
+    
+    # NOTE: raw=True mode prevents KV cache context arrays from working.
+    # However, KV cache is incompatible with dynamic memory retrieval architecture.
+    # Each turn retrieves DIFFERENT memories based on current question.
+    # Caching old memories in context array would give incorrect/stale context.
+    # Current architecture (re-evaluate fresh each turn) is correct for RAG system.
     
     # Use explicit context to append to prior KV state and preserve conversation
     if context:

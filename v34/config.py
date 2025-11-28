@@ -12,7 +12,8 @@ USE_CHAT_ENDPOINT = False
 # Megaprompt Strategy: Controls how prompts are constructed for /api/generate
 # When True, send the full megaprompt (persona + history + ephemeral system + latest user) every turn.
 # When False, use baseline-once + ephemeral tail thereafter with KV context chaining.
-USE_FULL_MEGA_PROMPT = True
+# NOTE: Tail mode with KV cache is incompatible with dynamic memory retrieval (memories change each turn)
+USE_FULL_MEGA_PROMPT = True  # Keep True for RAG system with dynamic memory retrieval
 MAX_TOKENS = 7000
 APPROX_CHARS_PER_TOKEN = 4
 MAX_CHARS = MAX_TOKENS * APPROX_CHARS_PER_TOKEN
