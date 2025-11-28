@@ -250,6 +250,19 @@ def transcribe_audio(socketio_app):
                     if final_transcripts:
                         latest_entry = final_transcripts[-1]
                         
+                        # PAUSE LISTENING IMMEDIATELY after finalization
+                        # This prevents capturing new speech while we're processing/responding
+                        with synthesis_lock:
+                            is_speech_synthesis_active = True
+                            # Clear any audio that accumulated during finalization
+                            queue_cleared_count = 0
+                            while not audio_queue.empty():
+                                audio_queue.get()
+                                queue_cleared_count += 1
+                            if queue_cleared_count > 0:
+                                print(f">>> [AUTO-PAUSE] Cleared {queue_cleared_count} audio chunks after finalization")
+                        print(">>> [AUTO-PAUSE] Listening paused after finalization (will resume after TTS)")
+                        
                         # Log after finalization complete
                         if LATENCY_TRACKING_ENABLED and request_id:
                             log_timing(request_id, "stt", Events.STT_TRANSCRIPT_FINALIZED, 
@@ -375,7 +388,10 @@ def pause_listening():
     print(">>> [PAUSE] Received pause-listening request from TTS")
     import sys
     sys.stdout.flush()
+    
+    already_paused = False
     with synthesis_lock:
+        already_paused = is_speech_synthesis_active
         is_speech_synthesis_active = True
         # Clear audio_queue to prevent processing old audio chunks that could cause echo
         queue_cleared_count = 0
@@ -384,9 +400,13 @@ def pause_listening():
             queue_cleared_count += 1
         if queue_cleared_count > 0:
             print(f">>> [PAUSE] Cleared {queue_cleared_count} audio chunks from queue to prevent echo")
-    print(">>> [PAUSE] Listening paused - audio capture now dropped")
+    
+    if already_paused:
+        print(">>> [PAUSE] Already paused (auto-paused after finalization)")
+    else:
+        print(">>> [PAUSE] Listening paused - audio capture now dropped")
     sys.stdout.flush()
-    return jsonify({"status": "listening paused"})
+    return jsonify({"status": "listening paused", "already_paused": already_paused})
 
 @app.route('/resume-listening', methods=['POST'])
 def resume_listening():
