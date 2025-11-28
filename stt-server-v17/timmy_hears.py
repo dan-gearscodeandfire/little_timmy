@@ -144,6 +144,8 @@ def transcribe_audio(socketio_app):
     Continuously transcribes audio from the queue using faster-whisper.
     This function runs in a separate thread.
     """
+    global is_speech_synthesis_active  # Need global declaration since we modify it in finalization
+    
     audio_buffer = deque(maxlen=MAX_BUFFER_SIZE)
     last_transcription_time = time.time()
     last_audio_received_time = time.time()  # Track when audio was last received
