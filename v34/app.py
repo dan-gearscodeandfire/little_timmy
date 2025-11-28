@@ -445,12 +445,19 @@ def memory_tests_page():
 
 @app.route("/api/webhook", methods=['POST'])
 def handle_webhook():
+    # Log immediately upon entry to Flask handler
+    entry_time = time.time()
+    
     data = request.json
     if not data or "text" not in data:
         return {"error": "Invalid payload. 'text' field is required."}, 400
     
     user_input = data["text"]
     request_id = data.get("request_id")  # Get request_id from STT if provided
+    
+    # Log as soon as we have request_id
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", "v34_flask_handler_entry", {})
     
     if LATENCY_TRACKING_ENABLED and request_id:
         log_timing(request_id, "v34", Events.V34_WEBHOOK_RECEIVED, 
