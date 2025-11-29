@@ -646,38 +646,60 @@ USE_OPTIMIZED_RETRIEVAL = True  # Set to False to rollback
 
 ## Status Updates
 
-### November 28, 2025 - Phase 1 Complete ✅
-- ✅ Created restore point (`PGVECTOR_OPTIMIZATION_RESTORE_POINT.md`)
-- ✅ Added new timing events to `latency_tracker.py`
-- ✅ Instrumented `memory.py` with detailed timing
-  - `retrieve_similar_chunks()` - base function
-  - `retrieve_unique_relevant_chunks()` - actual retrieval path
-- ✅ Updated `app.py` to pass `request_id` to retrieval functions
-- ✅ Committed to git: `a114b6c`
+### November 28, 2025 - Phase 2A Complete ✅
+- ✅ **Implemented Optimization 1: Reuse Classification Metadata**
+  - Before: Called `llm.fast_generate_metadata()` per chunk (~400ms)
+  - After: Reuse user classification metadata for all chunks
+  - Expected savings: 200-300ms
+- ✅ **Implemented Optimization 2: Batch Database Inserts**
+  - Before: Individual commit per chunk (~50-100ms)
+  - After: Single `insert_chunks_batch()` with one commit
+  - Expected savings: 40-60ms
+- ✅ Added detailed logging showing metadata source and timings
+- ✅ Committed to git: `facbf98`
+- ✅ Git tag created: `phase2a-start` (rollback point)
 
-**Timing Breakdown Now Tracked:**
-- Embedding computation
-- PostgreSQL queries (parent lookup + chunk retrieval)
-- Filtering and deduplication
-- Total retrieval time
+**Expected Performance Improvement:**
+- Storage: 640ms → 280-360ms (44-56% faster)
+- Total: 2.4s → 2.0-2.1s (12-17% overall improvement)
 
 **Next Steps:**
-1. Restart v34 service to load instrumented code
-2. Run 5-10 test conversations
-3. Analyze baseline timing data
-4. Document findings
-5. Proceed to Phase 2: Embedding Cache
+1. Restart v34 service
+2. Run test conversations
+3. Verify performance improvement
+4. Document actual results
+
+### November 28, 2025 - Phase 1B Complete ✅ (Mystery Gap Solved!)
+- ✅ Discovered vector retrieval is ALREADY OPTIMAL (28-50ms)
+- ✅ Identified memory storage as real bottleneck (640ms)
+- ✅ Instrumented `chunk_and_store_text()` with detailed breakdown
+- ✅ Created `MYSTERY_GAP_SOLVED.md` documentation
+- ✅ Committed to git: `72c3390`
+
+**Key Discovery:**
+- Vector retrieval: 28-50ms (no optimization needed!)
+- Memory storage: 640ms (THE bottleneck!)
+  - Summary generation: ~200ms
+  - Per-chunk metadata: ~400ms
+  - DB operations: ~40ms
+
+### November 28, 2025 - Phase 1 Complete ✅
+- ✅ Created restore point (`PGVECTOR_OPTIMIZATION_RESTORE_POINT.md`)
+- ✅ Added retrieval timing events to `latency_tracker.py`
+- ✅ Instrumented retrieval functions with detailed timing
+- ✅ Committed to git: `a114b6c`
 
 ### November 28, 2025 - Project Initiated
 - ✅ Comprehensive analysis of current retrieval performance
-- ✅ Identified optimization opportunities
+- ✅ Identified optimization opportunities (later redirected!)
 - ✅ Created implementation plan
 
 ---
 
-**Current Phase:** Baseline Data Collection  
-**Git Commit:** `a114b6c` - Phase 1 instrumentation complete  
-**Ready For:** Testing and baseline measurement
+**Current Phase:** Phase 2A Testing  
+**Git Commit:** `facbf98` - Phase 2A optimizations complete  
+**Rollback:** `git reset --hard phase2a-start` if needed  
+**Ready For:** Performance testing and validation
 
 **Contact:** Track progress in this document
 
