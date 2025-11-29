@@ -106,7 +106,7 @@ def log_reader_thread(service_id):
                 
                 count = getattr(log_reader_thread, f'_error_count_{service_id}')
                 if count < 3:
-                    print(f"Error reading line from {service_id}: {e}")
+                print(f"Error reading line from {service_id}: {e}")
                     setattr(log_reader_thread, f'_error_count_{service_id}', count + 1)
     except Exception as e:
         print(f"Log reader thread error for {service_id}: {e}")
@@ -209,22 +209,22 @@ def stop_service(service_id):
             
             # Terminate parent
             try:
-                parent.terminate()
+            parent.terminate()
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
             
             # Wait for termination
             try:
-                gone, alive = psutil.wait_procs([parent] + children, timeout=3)
-                
-                # Force kill if still alive
-                for p in alive:
-                    try:
-                        p.kill()
+            gone, alive = psutil.wait_procs([parent] + children, timeout=3)
+            
+            # Force kill if still alive
+            for p in alive:
+                try:
+                    p.kill()
                     except (psutil.NoSuchProcess, psutil.AccessDenied):
                         pass
             except Exception:
-                pass
+                    pass
                 
         except psutil.NoSuchProcess:
             pass
@@ -236,7 +236,7 @@ def stop_service(service_id):
                     subprocess.run(['taskkill', '/F', '/T', '/PID', str(process.pid)], 
                                  capture_output=True, timeout=3)
                 except Exception:
-                    pass
+            pass
         except Exception as e:
             print(f"Error stopping {service_id}: {e}")
         
@@ -392,7 +392,7 @@ if __name__ == '__main__':
     finally:
         # Always cleanup, even if already done
         try:
-            cleanup_services()
+        cleanup_services()
         except Exception as e:
             print(f"Cleanup error: {e}")
             sys.stdout.flush()

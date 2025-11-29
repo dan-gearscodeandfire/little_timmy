@@ -263,16 +263,16 @@ class PiperEngine:
         with self.lock:
             config = self.voice.config
             sample_rate = int(getattr(config, "sample_rate", 22050))
-            
+
             LOGGER.info(f"Opening audio stream: sample_rate={sample_rate}, channels=1, dtype=int16")
             
             try:
                 stream_obj = sd.OutputStream(
-                    samplerate=sample_rate,
-                    channels=1,
-                    dtype="int16",
-                    blocksize=max(128, sample_rate // 20),
-                    device=None,
+                samplerate=sample_rate,
+                channels=1,
+                dtype="int16",
+                blocksize=max(128, sample_rate // 20),
+                device=None,
                 )
             except Exception as e:
                 LOGGER.error(f"Failed to open audio stream: {e}")
@@ -426,7 +426,7 @@ def build_flask_app(engine: PiperEngine, synth_args: Dict[str, Any]) -> Flask:
                      {"text_length": len(text)})
         
         LOGGER.info(f"TTS request received: {len(text)} chars [request_id={request_id}]")
-        
+
         def _worker() -> None:
             try:
                 LOGGER.info(f"Starting speech synthesis for: '{text[:50]}...' [request_id={request_id}]")
