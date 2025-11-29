@@ -646,19 +646,38 @@ USE_OPTIMIZED_RETRIEVAL = True  # Set to False to rollback
 
 ## Status Updates
 
+### November 28, 2025 - Phase 1 Complete ✅
+- ✅ Created restore point (`PGVECTOR_OPTIMIZATION_RESTORE_POINT.md`)
+- ✅ Added new timing events to `latency_tracker.py`
+- ✅ Instrumented `memory.py` with detailed timing
+  - `retrieve_similar_chunks()` - base function
+  - `retrieve_unique_relevant_chunks()` - actual retrieval path
+- ✅ Updated `app.py` to pass `request_id` to retrieval functions
+- ✅ Committed to git: `a114b6c`
+
+**Timing Breakdown Now Tracked:**
+- Embedding computation
+- PostgreSQL queries (parent lookup + chunk retrieval)
+- Filtering and deduplication
+- Total retrieval time
+
+**Next Steps:**
+1. Restart v34 service to load instrumented code
+2. Run 5-10 test conversations
+3. Analyze baseline timing data
+4. Document findings
+5. Proceed to Phase 2: Embedding Cache
+
 ### November 28, 2025 - Project Initiated
 - ✅ Comprehensive analysis of current retrieval performance
 - ✅ Identified optimization opportunities
 - ✅ Created implementation plan
-- 🔲 Ready to begin Phase 1: Measurement & Baseline
 
 ---
 
-**Next Steps:**
-1. Add detailed timing instrumentation to `memory.py`
-2. Run baseline performance tests
-3. Implement embedding cache
-4. Measure improvement
+**Current Phase:** Baseline Data Collection  
+**Git Commit:** `a114b6c` - Phase 1 instrumentation complete  
+**Ready For:** Testing and baseline measurement
 
 **Contact:** Track progress in this document
 
