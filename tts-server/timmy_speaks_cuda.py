@@ -48,6 +48,21 @@ try:
 except Exception:
     ort = None
 
+# Global HTTP session with connection pooling for low-latency requests
+# Reuses TCP connections for pause/resume to STT and indicator updates
+http_session = requests.Session()
+http_session.mount('http://', requests.adapters.HTTPAdapter(
+    pool_connections=5,
+    pool_maxsize=5,
+    max_retries=0,
+    pool_block=False
+))
+http_session.mount('https://', requests.adapters.HTTPAdapter(
+    pool_connections=5,
+    pool_maxsize=5,
+    max_retries=0,
+    pool_block=False
+))
 
 LOGGER = logging.getLogger("timmy_hears_cuda")
 
@@ -101,7 +116,8 @@ def post_hearing_action(action: str, wait: bool) -> None:
     def _send() -> None:
         try:
             timeout = 0.5 if wait else 0.1  # Increased timeout for pause
-            resp = requests.post(f"{HEARING_SERVER_URL}/{action}", timeout=timeout)
+            # Use session for connection pooling (reduces latency)
+            resp = http_session.post(f"{HEARING_SERVER_URL}/{action}", timeout=timeout)
             if resp.status_code == 200:
                 LOGGER.debug(f"STT {action} successful")
             else:
@@ -120,7 +136,8 @@ def post_indicator_text(text: str) -> None:
     def _send() -> None:
         try:
             # Non-blocking JSON POST to external indicator; disable TLS verify like curl -k
-            requests.post(
+            # Use session for connection pooling (reduces latency)
+            http_session.post(
                 SKULL_EYE_ENDPOINT,
                 json={"text": text},
                 timeout=0.15,

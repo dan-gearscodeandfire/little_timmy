@@ -38,6 +38,22 @@ except ImportError:
     LATENCY_TRACKING_ENABLED = False
     utils.debug_print("[WARNING] Latency tracking not available")
 
+# Global HTTP session with connection pooling for low-latency requests
+# Reuses TCP connections for TTS requests and external API calls
+http_session = requests.Session()
+http_session.mount('http://', requests.adapters.HTTPAdapter(
+    pool_connections=10,
+    pool_maxsize=10,
+    max_retries=0,
+    pool_block=False
+))
+http_session.mount('https://', requests.adapters.HTTPAdapter(
+    pool_connections=10,
+    pool_maxsize=10,
+    max_retries=0,
+    pool_block=False
+))
+
 # --- Flask and SocketIO Setup ---
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -66,7 +82,8 @@ def _probe_service(name: str, url: str, timeout: float = 2.0) -> dict:
     try:
         # Prefer HEAD; many services may return 405 which we still accept
         verify_ssl = not url.lower().startswith("https") and True or False
-        resp = requests.request("HEAD", url, timeout=timeout, allow_redirects=False, proxies=proxies, verify=verify_ssl)
+        # Use session for connection pooling
+        resp = http_session.request("HEAD", url, timeout=timeout, allow_redirects=False, proxies=proxies, verify=verify_ssl)
         latency_ms = int((time.time() - start) * 1000)
         ok = resp.status_code in ACCEPTABLE_STATUS_CODES
         return {"name": name, "url": url, "ok": ok, "status": resp.status_code, "latency_ms": latency_ms, "error": None}
@@ -426,7 +443,8 @@ def handle_user_message(data):
         
         try:
             proxies = {'http': None, 'https': None}
-            eventlet.tpool.execute(requests.get, config.TTS_API_URL, params={"text": ai_response_text}, timeout=2, proxies=proxies)
+            # Use session for connection pooling (reduces latency)
+            eventlet.tpool.execute(http_session.get, config.TTS_API_URL, params={"text": ai_response_text}, timeout=2, proxies=proxies)
         except requests.exceptions.RequestException as e:
             utils.debug_print(f"*** Debug: Could not connect to TTS API: {e}")
             
@@ -479,7 +497,8 @@ def handle_webhook():
         tts_params = {"text": ai_response}
         if request_id:
             tts_params["request_id"] = request_id
-        eventlet.tpool.execute(requests.get, config.TTS_API_URL, params=tts_params, timeout=2, proxies=proxies)
+        # Use session for connection pooling (reduces latency)
+        eventlet.tpool.execute(http_session.get, config.TTS_API_URL, params=tts_params, timeout=2, proxies=proxies)
     except requests.exceptions.RequestException as e:
         utils.debug_print(f"*** Debug: Could not connect to TTS API: {e}")
         
