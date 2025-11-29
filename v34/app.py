@@ -212,7 +212,7 @@ def process_user_message(user_input: str, request_id=None):
     relevant_chunks = []
     context_text = ""
     if getattr(config, "RETRIEVAL_ENABLED", True):
-        relevant_chunks = memory.retrieve_unique_relevant_chunks(user_input)
+        relevant_chunks = memory.retrieve_unique_relevant_chunks(user_input, request_id=request_id)
         try:
             utils.debug_print(f"*** Debug: Retrieved {len(relevant_chunks)} memory chunks for context")
         except Exception:
@@ -515,7 +515,8 @@ def retrieve_inspect():
     # Use the newer Parent-Document retrieval path so the inspector shows
     # exactly the chunks supplied to the chat endpoint.
     # Convert datetime objects to ISO strings for JSON serialization
-    raw_results = memory.retrieve_unique_relevant_chunks(query)
+    # Note: No request_id for API inspection calls (not part of conversation flow)
+    raw_results = memory.retrieve_unique_relevant_chunks(query, request_id=None)
 
     import decimal, numpy as np
 

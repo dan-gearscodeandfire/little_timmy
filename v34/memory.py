@@ -35,10 +35,25 @@ from psycopg2 import pool
 import numpy as np
 import difflib
 import nltk
+import sys
+import time
+from pathlib import Path
 
 import config
 import utils
 import llm
+
+# Add shared directory to path for latency tracking
+shared_dir = Path(__file__).parent.parent / "shared"
+if str(shared_dir) not in sys.path:
+    sys.path.append(str(shared_dir))
+
+try:
+    from latency_tracker import log_timing, Events
+    LATENCY_TRACKING_ENABLED = True
+except ImportError:
+    LATENCY_TRACKING_ENABLED = False
+    print("[WARNING] Latency tracking not available in memory.py")
 
 # --- Database Pool Management ---
 
@@ -157,11 +172,34 @@ def insert_chunk_to_postgres(text, role, embedding, topic, importance, tags, ses
 
 # --- Memory Retrieval ---
 
-def retrieve_similar_chunks(query_text, k=config.NUM_RETRIEVED_CHUNKS):
-    """Retrieves chunks based on a hybrid score of semantic similarity and recency."""
+def retrieve_similar_chunks(query_text, k=config.NUM_RETRIEVED_CHUNKS, request_id=None):
+    """
+    Retrieves chunks based on a hybrid score of semantic similarity and recency.
+    
+    Phase 1 instrumentation: Added detailed timing to measure each stage:
+    - Embedding computation
+    - PostgreSQL query execution
+    - Result parsing
+    """
+    # Start timing: Embedding computation
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_RETRIEVAL_EMBEDDING_START, {})
+    
+    embedding_start = time.time()
     query_embedding = utils.get_embed_model().encode([query_text])[0]
+    embedding_duration = time.time() - embedding_start
+    
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_RETRIEVAL_EMBEDDING_COMPLETE, 
+                 {"duration_ms": round(embedding_duration * 1000, 2)})
+    
+    # Start timing: PostgreSQL query
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_RETRIEVAL_QUERY_START, {})
+    
     conn = None
     try:
+        query_start = time.time()
         conn = db_pool.getconn()
         with conn.cursor() as cur:
             cur.execute("""
@@ -173,12 +211,28 @@ def retrieve_similar_chunks(query_text, k=config.NUM_RETRIEVED_CHUNKS):
                 LIMIT %s;
             """, (query_embedding.tolist(), query_embedding.tolist(), config.RECENCY_WEIGHT, k))
             results = cur.fetchall()
+        query_duration = time.time() - query_start
         
-        return [{
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "v34", Events.V34_RETRIEVAL_QUERY_COMPLETE, 
+                     {"duration_ms": round(query_duration * 1000, 2),
+                      "num_results": len(results)})
+        
+        # Parse results
+        parsed_results = [{
             "text": row[0], "role": row[1], "topic": row[2], "importance": row[3],
             "tags": row[4], "session_id": row[5], "timestamp": row[6],
             "distance": row[7], "hybrid_score": row[8]
         } for row in results]
+        
+        # Log baseline stats for analysis
+        if LATENCY_TRACKING_ENABLED and request_id:
+            utils.debug_print(f"[RETRIEVAL BASELINE] request_id={request_id}, "
+                            f"embedding={embedding_duration*1000:.1f}ms, "
+                            f"query={query_duration*1000:.1f}ms, "
+                            f"total={( embedding_duration+query_duration)*1000:.1f}ms")
+        
+        return parsed_results
     finally:
         if conn:
             db_pool.putconn(conn)
@@ -287,28 +341,59 @@ def is_duplicate_chunk(candidate_text: str, history, threshold=0.8):
             return True
     return False
 
-def retrieve_unique_relevant_chunks(query: str, k: int = config.NUM_RETRIEVED_CHUNKS):
+def retrieve_unique_relevant_chunks(query: str, k: int = config.NUM_RETRIEVED_CHUNKS, request_id=None):
     """
     Fetches relevant chunks using the Parent Document Retrieval method.
     1. Find relevant parent documents based on summary similarity.
     2. Find the best chunks within those parent documents.
     3. Filter out chunks that are too similar to recent conversation history.
+    
+    Phase 1 instrumentation: Added detailed timing to measure each stage.
     """
     utils.debug_print("*** Debug: Retrieving chunks via Parent Document method...")
+    
+    # Start timing: Embedding computation
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_RETRIEVAL_EMBEDDING_START, {})
+    
+    embedding_start = time.time()
     query_embedding = utils.get_embed_model().encode([query])[0]
+    embedding_duration = time.time() - embedding_start
+    
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_RETRIEVAL_EMBEDDING_COMPLETE, 
+                 {"duration_ms": round(embedding_duration * 1000, 2)})
 
+    # Start timing: PostgreSQL queries
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_RETRIEVAL_QUERY_START, {})
+    
+    query_start = time.time()
+    
     # Step 1: Find relevant parent documents. Over-fetch to cast a wider net.
     parent_ids = retrieve_relevant_parent_ids(query_embedding, k=k * 2)
     utils.debug_print(f"*** Debug: Found {len(parent_ids)} relevant parent document IDs.")
     if not parent_ids:
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "v34", Events.V34_RETRIEVAL_QUERY_COMPLETE, 
+                     {"duration_ms": 0, "num_results": 0, "no_parents": True})
         return []
 
     # Step 2: Retrieve the best chunks from within that set of parents.
     # Over-fetch again to have more candidates for the final uniqueness filter.
     retrieved_chunks = retrieve_similar_chunks_from_parents(query_embedding, parent_ids, k=k * 2, query_text=query)
     utils.debug_print(f"*** Debug: Retrieved {len(retrieved_chunks)} candidate chunks from parents.")
+    
+    query_duration = time.time() - query_start
+    
+    if LATENCY_TRACKING_ENABLED and request_id:
+        log_timing(request_id, "v34", Events.V34_RETRIEVAL_QUERY_COMPLETE, 
+                 {"duration_ms": round(query_duration * 1000, 2),
+                  "num_parents": len(parent_ids),
+                  "num_candidate_chunks": len(retrieved_chunks)})
 
     # Step 3: Filter for uniqueness against recent history AND other retrieved chunks.
+    filtering_start = time.time()
     unique_chunks = []
     for chunk in retrieved_chunks:
         # Check against conversation history
@@ -326,8 +411,21 @@ def retrieve_unique_relevant_chunks(query: str, k: int = config.NUM_RETRIEVED_CH
         
         if not is_duplicate_of_selected:
             unique_chunks.append(chunk)
+    
+    filtering_duration = time.time() - filtering_start
+    total_duration = embedding_duration + query_duration + filtering_duration
 
     utils.debug_print(f"*** Debug: Returning {len(unique_chunks[:k])} unique, relevant chunks.")
+    
+    # Log baseline stats for analysis
+    if LATENCY_TRACKING_ENABLED and request_id:
+        utils.debug_print(f"[RETRIEVAL BASELINE] request_id={request_id}, "
+                        f"embedding={embedding_duration*1000:.1f}ms, "
+                        f"query={query_duration*1000:.1f}ms, "
+                        f"filtering={filtering_duration*1000:.1f}ms, "
+                        f"total={total_duration*1000:.1f}ms, "
+                        f"results={len(unique_chunks[:k])}")
+    
     return unique_chunks[:k] 
 
 # --- Memory Pruning and Cleanup ---
