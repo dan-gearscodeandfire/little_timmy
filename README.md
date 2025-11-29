@@ -9,6 +9,7 @@ Voice-enabled AI assistant with persistent vector memory, GPU-accelerated speech
 1. **📖 [SYSTEM_ARCHITECTURE.md](SYSTEM_ARCHITECTURE.md)** - Complete system overview, component diagram, and data flow
 2. **🛠️ [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md)** - Development workflow, Git operations, and environment setup
 3. **📊 Performance & Optimization:**
+   - [LATENCY_OPTIMIZATION_SUCCESS.md](LATENCY_OPTIMIZATION_SUCCESS.md) - ⭐ **50% latency improvement story**
    - [LATENCY_ANALYSIS_FINDINGS.md](LATENCY_ANALYSIS_FINDINGS.md) - Performance breakdown and bottlenecks
    - [WHY_NO_KV_CACHE.md](WHY_NO_KV_CACHE.md) - Why KV cache is incompatible with RAG architecture
    - [shared/README.md](shared/README.md) - Latency tracking system documentation
