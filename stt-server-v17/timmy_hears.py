@@ -45,6 +45,23 @@ class TranscriptFilter(logging.Filter):
         # Return False to prevent the log record from being processed.
         return '/transcript' not in record.getMessage()
 
+# Global HTTP session with connection pooling for low-latency requests
+# This reuses TCP connections instead of creating new ones for each request
+http_session = requests.Session()
+# Configure connection pool: keep up to 10 connections alive, reuse for up to 100 requests
+http_session.mount('http://', requests.adapters.HTTPAdapter(
+    pool_connections=10,
+    pool_maxsize=10,
+    max_retries=0,
+    pool_block=False
+))
+http_session.mount('https://', requests.adapters.HTTPAdapter(
+    pool_connections=10,
+    pool_maxsize=10,
+    max_retries=0,
+    pool_block=False
+))
+
 # Global variables to store transcription data
 transcript_manager = TranscriptManager(max_history=50)
 PAUSE_THRESHOLD = 0.5  # seconds of silence to consider speech finished (reduced from 1.0s for faster response)
@@ -484,7 +501,8 @@ def send_to_llm_preprocessor(text, request_id=None):
             log_timing(request_id, "stt", "stt_http_request_start", 
                      {"endpoint": LLM_ENDPOINT})
         
-        response = requests.post(
+        # Use session for connection pooling (reduces latency by reusing TCP connections)
+        response = http_session.post(
             LLM_ENDPOINT,
             headers={"Content-Type": "application/json"},
             data=json.dumps(payload),
@@ -519,7 +537,8 @@ def notify_eye(text: str):
     Mirrors: curl -k -X POST https://192.168.1.110:8080/esp32/write -H "Content-Type: application/json" -d '{"text":"AI_CONNECTED"}'
     """
     try:
-        requests.post(
+        # Use session for connection pooling
+        http_session.post(
             f"{EYE_LCD_URL}/esp32/write",
             headers={"Content-Type": "application/json"},
             json={"text": text},
