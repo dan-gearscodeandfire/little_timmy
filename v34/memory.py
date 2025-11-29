@@ -93,18 +93,28 @@ def insert_parent_document(full_text, summary, summary_embedding, role, session_
         if conn:
             db_pool.putconn(conn)
 
-def chunk_and_store_text(text: str, role: str, metadata=None, session_id=None):
+def chunk_and_store_text(text: str, role: str, metadata=None, session_id=None, request_id=None):
     """
     Summarizes text, stores the parent document, then splits the text into
     semantically coherent, overlapping chunks and stores them linked to the parent.
+    
+    Mystery Gap Investigation: Added detailed timing for each operation.
     """
     utils.debug_print(f"*** Debug: Parent Document Ingestion for role={role}...")
+    
+    start_time = time.time()
 
     # 1. Generate summary and its embedding
+    summary_start = time.time()
     summary = llm.fast_generate_summary(text)
+    summary_gen_duration = time.time() - summary_start
+    
+    embed_summary_start = time.time()
     summary_embedding = utils.get_embed_model().encode([summary])[0]
+    embed_summary_duration = time.time() - embed_summary_start
 
     # 2. Store the parent document and get its ID
+    parent_insert_start = time.time()
     parent_id = insert_parent_document(
         full_text=text,
         summary=summary,
@@ -112,9 +122,11 @@ def chunk_and_store_text(text: str, role: str, metadata=None, session_id=None):
         role=role,
         session_id=session_id
     )
+    parent_insert_duration = time.time() - parent_insert_start
     utils.debug_print(f"*** Debug: Stored parent document with ID: {parent_id}")
 
     # 3. Chunk the original text
+    chunking_start = time.time()
     sentences = nltk.sent_tokenize(text)
     if not sentences:
         return
@@ -141,9 +153,15 @@ def chunk_and_store_text(text: str, role: str, metadata=None, session_id=None):
 
     if not chunks:
         return
+    
+    chunking_duration = time.time() - chunking_start
 
     # 4. Embed chunks and store them with the parent ID
+    embed_chunks_start = time.time()
     embeddings = utils.get_embed_model().encode(chunks)
+    embed_chunks_duration = time.time() - embed_chunks_start
+    
+    metadata_and_insert_start = time.time()
     for chunk_text, emb in zip(chunks, embeddings):
         # Use fast classifier-based metadata generation (fallback if metadata not provided)
         chunk_metadata = metadata or llm.fast_generate_metadata(chunk_text)
@@ -153,7 +171,22 @@ def chunk_and_store_text(text: str, role: str, metadata=None, session_id=None):
             tags=chunk_metadata.get("tags", []), session_id=session_id,
             parent_id=parent_id
         )
+    metadata_and_insert_duration = time.time() - metadata_and_insert_start
+    
+    total_duration = time.time() - start_time
     utils.debug_print(f"*** Debug: Stored {len(chunks)} chunks linked to parent {parent_id}.")
+    
+    # Log detailed breakdown for mystery gap analysis
+    if LATENCY_TRACKING_ENABLED and request_id:
+        utils.debug_print(f"[STORAGE BREAKDOWN] request_id={request_id}, "
+                        f"summary_gen={summary_gen_duration*1000:.1f}ms, "
+                        f"embed_summary={embed_summary_duration*1000:.1f}ms, "
+                        f"parent_insert={parent_insert_duration*1000:.1f}ms, "
+                        f"chunking={chunking_duration*1000:.1f}ms, "
+                        f"embed_chunks={embed_chunks_duration*1000:.1f}ms, "
+                        f"metadata+insert={metadata_and_insert_duration*1000:.1f}ms, "
+                        f"total={total_duration*1000:.1f}ms, "
+                        f"num_chunks={len(chunks)}")
 
 def insert_chunk_to_postgres(text, role, embedding, topic, importance, tags, session_id, parent_id):
     """Inserts a single memory chunk into the database, linked to a parent."""

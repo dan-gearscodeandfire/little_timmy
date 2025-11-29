@@ -201,8 +201,22 @@ def process_user_message(user_input: str, request_id=None):
     t2 = time.time()
     # Always store user message importance> threshold, independent of retrieval toggle
     if should_embed_user:
-        memory.chunk_and_store_text(user_input, role="user", metadata=user_metadata, session_id=SESSION_ID)
-    utils.debug_print(f"--- Step 3 (Memory Storage) took: {time.time() - t2:.2f}s")
+        # Log memory storage start for gap analysis
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "v34", "v34_memory_storage_start", {})
+        
+        memory.chunk_and_store_text(user_input, role="user", metadata=user_metadata, session_id=SESSION_ID, request_id=request_id)
+        
+        if LATENCY_TRACKING_ENABLED and request_id:
+            log_timing(request_id, "v34", "v34_memory_storage_complete", 
+                     {"duration_ms": round((time.time() - t2) * 1000, 2)})
+    
+    storage_duration = time.time() - t2
+    utils.debug_print(f"--- Step 3 (Memory Storage) took: {storage_duration:.2f}s")
+    
+    # Log the mystery gap for analysis
+    if LATENCY_TRACKING_ENABLED and request_id:
+        utils.debug_print(f"[MYSTERY GAP] request_id={request_id}, storage={storage_duration*1000:.1f}ms")
     
     # 4. Context retrieval (can be disabled for KV/session-only testing)
     t3 = time.time()
